@@ -6,12 +6,12 @@ final class CollageRenderer {
     static let shared = CollageRenderer()
     private init() {}
 
-    private func makeCanvas(size: CGSize, draw: (CGContext) -> Void) -> UIImage {
+    private func makeCanvas(size: CGSize, background: UIColor = UIColor(red: 0.96, green: 0.95, blue: 0.92, alpha: 1), draw: (CGContext) -> Void) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true
         return UIGraphicsImageRenderer(size: size, format: format).image { ctx in
-            UIColor(red: 0.96, green: 0.95, blue: 0.92, alpha: 1).setFill()
+            background.setFill()
             ctx.fill(CGRect(origin: .zero, size: size))
             draw(ctx.cgContext)
         }
@@ -36,7 +36,7 @@ final class CollageRenderer {
     }
 
     /// Multipage canvas export: one JPEG for each page, respecting slots and page order.
-    func renderPages(pages: [CollagePage], photos: [PhotoRecord]) throws -> [URL] {
+    func renderPages(pages: [CollagePage], photos: [PhotoRecord], pageNumbers: [Int]? = nil) throws -> [URL] {
         guard !pages.isEmpty else { return [] }
         let directory = try AppFolders.newExportDirectory(prefix: "pages")
         let byID = Dictionary(uniqueKeysWithValues: photos.map { ($0.id, $0) })
@@ -44,7 +44,8 @@ final class CollageRenderer {
         for (index, page) in pages.enumerated() {
             let width: CGFloat = 1080
             let height: CGFloat = (width / page.ratio.ratio).rounded()
-            let image = makeCanvas(size: CGSize(width: width, height: height)) { context in
+            let background: UIColor = page.background == .black ? .black : .white
+            let image = makeCanvas(size: CGSize(width: width, height: height), background: background) { context in
                 for slot in page.layout.rects.indices {
                     guard page.photoIDs.indices.contains(slot),
                           let id = page.photoIDs[slot], let photo = byID[id] else { continue }
@@ -52,7 +53,8 @@ final class CollageRenderer {
                     place(photo, in: rect, context: context)
                 }
             }
-            let url = directory.appendingPathComponent(String(format: "page-%02d.jpg", index + 1))
+            let originalNumber = pageNumbers?[index] ?? (index + 1)
+            let url = directory.appendingPathComponent(String(format: "page-%02d.jpg", originalNumber))
             try save(image, at: url)
             results.append(url)
         }
