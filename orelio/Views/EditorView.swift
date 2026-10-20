@@ -301,6 +301,14 @@ struct EditorView: View {
         }
     }
 
+    private func filmPreviewSaturation(_ look: FilmLook) -> Double {
+        if look.category == .bw { return 0 }
+        switch look {
+        case .faded, .vintageGolden, .vintageTeal, .vintageMuted: return 0.7
+        default: return 0.9
+        }
+    }
+
     private func filmButton(_ look: FilmLook) -> some View {
         let selected = store.activePhoto?.recipe.look == look
         return Button {
@@ -318,7 +326,7 @@ struct EditorView: View {
                         Image(uiImage: thumbnail)
                             .resizable()
                             .scaledToFill()
-                            .saturation(look.category == .bw || look == .negCool ? 0 : look.category == .vintage ? 0.7 : 0.9)
+                            .saturation(filmPreviewSaturation(look))
                             .overlay(look.category == .instant ? Color.orange.opacity(0.12) : Color.clear)
                     } else {
                         Rectangle().fill(Color.gray.opacity(0.2))
