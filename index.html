@@ -123,6 +123,11 @@ section[data-view="edit"] .paneltab.on{background:transparent;color:#fff;box-sha
 }
 .edit-controls .film-thumb { border-radius:9px; }
 .edit-controls .film-item.on .film-thumb { border-color:#fff; }
+
+/* Consistent circular light; border layer must paint over image, never be clipped when outside. */
+.photo-window .orelio-border-preview{pointer-events:none;position:absolute;inset:0;z-index:6}
+.photo-window .wash{border-radius:0;transform:none;inset:0;aspect-ratio:auto}
+.photo-window .light-handle{z-index:8}
 </style></head><body><div class="wrap"><div class="subnote">Interactive iPhone UI prototype · v0.5</div><div class="device"><div class="notch"></div><div class="status"><span>9:41</span><span>▂▃▅ ◉ ▰</span></div><div class="app">
 <section class="screen on" data-view="library"><div class="top"><strong>Library</strong><div class="right"><span class="tiny">● OFFLINE</span><button class="iconbtn" id="multi">Select</button><button class="iconbtn" id="importBtn">＋</button></div></div><div class="inner"><div class="eyebrow">YOUR PHOTOGRAPHS</div><div class="hint">12 photos · Local collection</div></div><div class="scroll"><div class="photo-grid" id="grid"></div></div><div class="tray" id="selectionTray"><div class="tray-row"><span id="selectCount" class="muted">0 selected</span><button class="textbtn" id="allBtn"><span aria-hidden="true">◉</span> Select all</button></div><div class="tray-row"><button class="action action-with-icon" id="pasteBtn"><span class="btnicon" aria-hidden="true">⧉</span><span>Paste edits</span></button><button class="plain action-with-icon" id="selExport"><span class="btnicon" aria-hidden="true">⇧</span><span>Batch export</span></button></div></div></section>
 <section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon modeicon--film"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="9" width="16" height="19" rx="3"/><rect x="13" y="5" width="6" height="4" rx="1" fill="currentColor" stroke="none"/><path d="M8 15h16"/></svg></span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Composition</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
@@ -220,26 +225,55 @@ function slider(label,initial=0,min=-100,max=100){let value=sliders[label]??init
 // composition guides are per-user UI preferences and never exported.
 let borderState={enabled:false,placement:'inside',color:'white',width:1.5};
 let guideState={kind:'off',turns:0,mirror:false,dark:false,opacity:72};
+let lightPositions=[{x:.76,y:.28}];
+function currentLightPosition(){
+ return lightPositions[activeLight] || (lightPositions[activeLight]={x:.76,y:.28});
+}
+// Exact Fibonacci construction based on contiguous 5,3,2,1,1 squares
+// in an 8x5 rectangle. Scale isotropically so quarter-circles stay circular.
+function fibonacciOverlay(w,h){
+ const rotatedForPortrait=h>w;
+ const unit=Math.min(w/(rotatedForPortrait?5:8),h/(rotatedForPortrait?8:5));
+ const g=unit,tw=8*g,th=5*g;
+ const tx=(w-tw)/2,ty=(h-th)/2;
+ // Drawing coords in Fibonacci units. x=5 divides the large 5x5 square.
+ const cells=[[0,0,5],[5,0,3],[5,3,2],[7,3,1],[7,4,1]];
+ const squares=cells.map(([x,y,d])=>'<rect x="'+x*g+'" y="'+y*g+'" width="'+d*g+'" height="'+d*g+'"/>').join('');
+ // 5->3->2->1->1 circular quarter-arcs, not a logarithmic approximation.
+ const arcs=[
+  'M '+(0*g)+' '+(5*g)+' A '+(5*g)+' '+(5*g)+' 0 0 1 '+(5*g)+' '+(0*g),
+  'M '+(5*g)+' '+(0*g)+' A '+(3*g)+' '+(3*g)+' 0 0 1 '+(8*g)+' '+(3*g),
+  'M '+(8*g)+' '+(3*g)+' A '+(2*g)+' '+(2*g)+' 0 0 1 '+(6*g)+' '+(5*g),
+  'M '+(6*g)+' '+(5*g)+' A '+g+' '+g+' 0 0 1 '+(5*g)+' '+(4*g)
+ ].map(d=>'<path d="'+d+'"/>').join('');
+ const turn=(guideState.turns+(rotatedForPortrait?1:0))%4;
+ const rotation=turn*90, mx=guideState.mirror?-1:1;
+ const transform='translate('+(w/2)+' '+(h/2)+') rotate('+rotation+') scale('+mx+' 1) translate('+(-tw/2)+' '+(-th/2)+')';
+ // When turning a horizontal golden rectangle on portrait screens,
+ // compute the fit for a vertical orientation before rotation.
+ const fitted=rotatedForPortrait?Math.min(w/5,h/8):Math.min(w/8,h/5);
+ const fix=fitted/g;
+ return '<g transform="'+transform+' scale('+fix+')"><rect x="0" y="0" width="'+tw+'" height="'+th+'"/>'+squares+arcs+'</g>';
+}
 function syncOverlay(){
  const win=byId('photoWindow'),out=byId('gridOverlay');
- let pixelSize=Math.max(1,Math.round(Math.min(win.clientWidth,win.clientHeight)*borderState.width/100));
+ if(!win||!out)return;
+ const w=win.clientWidth||300,h=win.clientHeight||350;
+ const px=Math.max(1,Math.round(Math.min(w,h)*borderState.width/100));
  const ink=borderState.color==='white'?'#fff':'#000';
- win.style.boxShadow='none';win.style.outline=borderState.enabled&&borderState.placement==='outside'?`${pixelSize}px solid ${ink}`:'none';win.style.outlineOffset='0px';
- // an inside box-shadow on a positioned wrapper must render ABOVE its image.
- const photoEl=byId('mainPhoto');
- photoEl.style.outline='none';
- const inner=win.querySelector('.inside-border');
- if(inner)inner.remove();
- if(borderState.enabled && borderState.placement==='inside'){
-   const frame=document.createElement('div'); frame.className='inside-border';
-   Object.assign(frame.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'3',boxShadow:`inset 0 0 0 ${pixelSize}px ${ink}`});
-   win.appendChild(frame);
+ // Border is a dedicated overlay, never hidden behind the photo.
+ let frame=win.querySelector('.orelio-border-preview');
+ if(!frame){frame=document.createElement('div');frame.className='orelio-border-preview';win.appendChild(frame);}
+ Object.assign(frame.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'6',
+  border:'0',outline:'none',boxShadow:'none'});
+ win.style.overflow=borderState.enabled&&borderState.placement==='outside'?'visible':'hidden';
+ if(borderState.enabled){
+  frame.style.boxShadow=borderState.placement==='inside'
+   ? 'inset 0 0 0 '+px+'px '+ink : '0 0 0 '+px+'px '+ink;
  }
  if(guideState.kind==='off'){out.innerHTML='';return;}
- const rgba=guideState.dark?'0,0,0':'255,255,255';
- const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
- const width=win.clientWidth||300,height=win.clientHeight||350;
- let paths='';
+ const line=(x1,y1,x2,y2)=>'<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';
+ let paths='', view='0 0 1000 1000';
  switch(guideState.kind){
  case 'thirds':
   [1/3,2/3].forEach(t=>{paths+=line(t*1000,0,t*1000,1000)+line(0,t*1000,1000,t*1000)});break;
@@ -247,33 +281,19 @@ function syncOverlay(){
   paths+=line(395,500,605,500)+line(500,395,500,605)+'<circle cx="500" cy="500" r="12" fill="none"/>';break;
  case 'triangles':{
   paths+=line(0,0,1000,1000);
-  const ax=width*width/(width*width+height*height);
-  const ay=height*height/(width*width+height*height);
+  const ax=w*w/(w*w+h*h),ay=h*h/(w*w+h*h);
   paths+=line(1000,0,ax*1000,ax*1000)+line(0,1000,ay*1000,ay*1000);break;
  }
  case 'square':{
-  let step=Math.min(width,height)/5;
-  for(let xx=width/2%step;xx<=width;xx+=step)paths+=line(xx/width*1000,0,xx/width*1000,1000);
-  for(let yy=height/2%step;yy<=height;yy+=step)paths+=line(0,yy/height*1000,1000,yy/height*1000);break;
+  let step=Math.min(w,h)/5;
+  for(let xx=w/2%step;xx<=w;xx+=step)paths+=line(xx/w*1000,0,xx/w*1000,1000);
+  for(let yy=h/2%step;yy<=h;yy+=step)paths+=line(0,yy/h*1000,1000,yy/h*1000);break;
  }
- case 'spiral':{
-  const phi=(1+Math.sqrt(5))/2, maxTheta=3.4*Math.PI,
-    angle=guideState.turns*Math.PI/2, scale=0.67*Math.min(width,height);
-  let points=[];
-  for(let i=0;i<=520;i++){
-    let theta=-3.5*Math.PI+(maxTheta+3.5*Math.PI)*i/520;
-    let r=scale*Math.pow(phi,(theta-maxTheta)/(Math.PI/2));
-    let px=r*Math.cos(theta)*(guideState.mirror?-1:1),py=r*Math.sin(theta);
-    let rx=px*Math.cos(angle)-py*Math.sin(angle),ry=px*Math.sin(angle)+py*Math.cos(angle);
-    points.push((500+rx/width*1000).toFixed(2)+','+(500+ry/height*1000).toFixed(2));
-  }
-  paths+=`<polyline points="${points.join(' ')}" fill="none"/>`;break;
+ case 'spiral':view='0 0 '+w+' '+h;paths=fibonacciOverlay(w,h);break;
  }
- }
- out.innerHTML=`<g stroke="${guideState.dark?'#000':'#fff'}" stroke-opacity="${guideState.opacity/100}" stroke-width="1.3" vector-effect="non-scaling-stroke" fill="none" stroke-linejoin="round" stroke-linecap="round">${paths}</g>`;
- // The fitted photo wrapper clips every guide, including after rotating.
+ out.setAttribute('viewBox',view);
+ out.innerHTML='<g stroke="'+(guideState.dark?'#000':'#fff')+'" stroke-opacity="'+guideState.opacity/100+'" stroke-width="1.5" vector-effect="non-scaling-stroke" fill="none" stroke-linejoin="round" stroke-linecap="round">'+paths+'</g>';
 }
-
 function renderControls(){
  const node=byId('controlArea');
 
@@ -321,8 +341,8 @@ function renderControls(){
   node.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{activeTool=b.dataset.tool;renderControls()});
  } else if(panel==='light') {
   node.innerHTML=`<div class="labelbar"><span>LIGHTING LAYERS</span><button id="addLight" class="plain">＋ Add Light</button></div><div class="light-rail">${lightLayers.map((v,i)=>`<button class="light-pill ${i===activeLight?'on':''}" data-light="${i}">${v}</button>`).join('')}</div>${lightLayers.length?`${slider('Light Strength',58,0,100)}${slider('Size',65,0,100)}${slider('Softness',80,0,100)}${slider('Light Opacity',75,0,100)}${slider('Light Saturation',60,0,100)}${slider('Light Contrast',35,0,100)}${slider('Angle',0,-180,180)}`:'<p class="hint">Add light to the photo.</p>'}<p class="tiny">Light is clipped to the photo frame. Drag the handle to change its position.</p>`;
-  node.querySelector('#addLight').onclick=()=>{if(lightLayers.length<8){lightLayers.push(['Film Leak','Lens Streak','Sun Rays','Blue Hour','Golden Glow'][lightLayers.length%5]);activeLight=lightLayers.length-1;renderEditor()}};
-  node.querySelectorAll('[data-light]').forEach(b=>b.onclick=()=>{activeLight=Number(b.dataset.light);renderControls()});
+  node.querySelector('#addLight').onclick=()=>{if(lightLayers.length<8){lightLayers.push(['Film Leak','Lens Streak','Sun Rays','Blue Hour','Golden Glow'][lightLayers.length%5]);lightPositions.push({x:.76,y:.28});activeLight=lightLayers.length-1;renderEditor()}};
+  node.querySelectorAll('[data-light]').forEach(b=>b.onclick=()=>{activeLight=Number(b.dataset.light);renderControls();renderLightPreview()});
  } else if(panel==='border'){
   node.innerHTML=`<div class="control-line"><b>Outline / Border</b><label><input type="checkbox" id="borderEnabled" ${borderState.enabled?'checked':''}> Enabled</label></div>
   <div class="labelbar" style="padding:7px 16px 0"><span>PLACEMENT</span><span>COLOR</span></div>
@@ -335,7 +355,7 @@ function renderControls(){
   node.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{borderState.color=b.dataset.color;renderControls();syncOverlay()});
   node.querySelector('#borderWidth').oninput=e=>{borderState.width=Number(e.target.value);byId('borderVal').textContent=e.target.value+'%';syncOverlay()};
  } else if(panel==='guide'){
-  const gridOptions=[['off','Off'],['thirds','Rule of Thirds'],['spiral','Golden Ratio / Spiral'],['center','Center Marker'],['triangles','Golden Triangles'],['square','Square Grid']];
+  const gridOptions=[['off','Off'],['thirds','Rule of Thirds'],['spiral','Fibonacci Spiral'],['center','Center Marker'],['triangles','Golden Triangles'],['square','Square Grid']];
   node.innerHTML=`<div class="control-line"><b>Composition Grid</b><select id="gridType">${gridOptions.map(([v,t])=>`<option value="${v}" ${guideState.kind===v?'selected':''}>${t}</option>`).join('')}</select></div>
   ${guideState.kind==='spiral'?`<div class="rotate-actions"><button id="rotLeft">↶ 90°</button><button id="rotRight">↷ 90°</button><button id="mirror">Mirror: ${guideState.mirror?'ON':'OFF'}</button><span>${guideState.turns*90}°</span></div>`:''}
   <div class="control-line"><label>Black guide lines <input type="checkbox" id="gridDark" ${guideState.dark?'checked':''}></label></div>
@@ -354,14 +374,31 @@ function renderControls(){
   sliders[sl.dataset.slider]=Number(sl.value);
   node.querySelector(`[data-value="${sl.dataset.slider}"]`).textContent=sl.value;
   if(panel==='adjust')renderEditorPhotoOnly();if(panel==='light')renderLightPreview();
-  if(sl.dataset.slider==='Light Strength')byId('wash').style.opacity=sl.value/100;
-  if(sl.dataset.slider==='Size')renderLightPreview();
  });
 }
 function renderEditorPhotoOnly(){byId('mainPhoto').style.filter=(filters[currentLook]||'none')+` brightness(${1+(sliders.Exposure||0)/250}) contrast(${1+(sliders.Contrast||0)/200}) saturate(${1+(sliders.Saturation||0)/180})`;updateDreamGlow()}
 
 function updateDreamGlow(){const g=byId('dreamGlow'),p=byId('mainPhoto');if(!g||!p)return;g.src=p.src;const v=Number(sliders.Glow||0),h=Number(sliders.Halation||0);g.style.opacity=v/200;g.style.filter='blur('+(5+v*.22)+'px) brightness('+(1.1+v*.004)+') saturate('+(1+h*.015)+') drop-shadow(0 0 '+(3+h*.22)+'px rgba(255,80,32,'+(h/120)+'))';}
-function renderLightPreview(){const w=byId('wash');if(!w)return;if(!lightLayers.length){w.style.display='none';return}const size=Number(sliders.Size??65),soft=Number(sliders.Softness??80)/100,opacity=Number(sliders['Light Opacity']??75)/100,strength=Number(sliders['Light Strength']??58)/100,sat=Number(sliders['Light Saturation']??60)/100,contrast=Number(sliders['Light Contrast']??35)/100;const inner=Math.round((1-soft)*65),outer=Math.min(100,Math.round(inner+12+soft*80));const name=lightLayers[activeLight]||'Golden Glow';const rgb=name==='Blue Hour'?'95,150,255':name==='Sun Rays'?'255,239,177':'255,166,96';w.style.display=panel==='light'?'block':'none';w.style.pointerEvents='none';w.style.backgroundImage='radial-gradient(circle at 50% 50%,rgba('+rgb+','+(.52+contrast*.4)+') 0%,rgba('+rgb+','+(.18+contrast*.2)+') '+inner+'%,rgba('+rgb+',0) '+outer+'%)';w.style.backgroundRepeat='no-repeat';w.style.backgroundSize=(12+size*1.8)+'% '+(12+size*1.8)+'%';w.style.backgroundPosition='center';w.style.opacity=strength*opacity;w.style.filter='saturate('+(.4+sat*1.8)+')';w.style.mixBlendMode='screen';}
+function renderLightPreview(){
+ const w=byId('wash'),handle=byId('lightHandle'),frame=byId('photoWindow');
+ if(!w||!handle||!frame)return;
+ if(!lightLayers.length){w.style.display='none';handle.style.display='none';return;}
+ const {x,y}=currentLightPosition();
+ handle.style.left=(x*100)+'%';handle.style.top=(y*100)+'%';
+ const size=Number(sliders.Size??65)/100,soft=Number(sliders.Softness??80)/100;
+ const opacity=Number(sliders['Light Opacity']??75)/100,strength=Number(sliders['Light Strength']??58)/100;
+ const saturation=Number(sliders['Light Saturation']??60)/100,contrast=Number(sliders['Light Contrast']??35)/100;
+ const radius=Math.max(20,Math.min(frame.clientWidth||300,frame.clientHeight||350)*(.13+.50*size));
+ const feather=Math.min(88,Math.max(6,(1-soft)*62));
+ const name=lightLayers[activeLight]||'Golden Glow';
+ const rgb=name==='Blue Hour'?'95,150,255':name==='Sun Rays'?'255,239,177':'255,166,96';
+ const energy= Math.min(1, strength*opacity);
+ w.style.display=panel==='light'?'block':'none';
+ handle.style.display=panel==='light'?'flex':'none';
+ w.style.backgroundImage='radial-gradient(circle '+radius+'px at '+(x*100)+'% '+(y*100)+'%, rgba('+rgb+','+(.25+.50*contrast)+') 0%, rgba('+rgb+','+(.09+.22*contrast)+') '+feather+'%,rgba('+rgb+',0) 100%)';
+ w.style.backgroundSize='100% 100%';w.style.backgroundPosition='0 0';w.style.backgroundRepeat='no-repeat';
+ w.style.opacity=energy;w.style.filter='saturate('+(.4+saturation*1.8)+')';w.style.mixBlendMode='screen';
+}
 function modal(title,html){byId('modalTitle').textContent=title;byId('modalContent').innerHTML=html;byId('modal').classList.add('on')};function closeModal(){byId('modal').classList.remove('on')}
 function setLayout(layout){let old=pages[page].photos;pages[page].layout=layout;pages[page].photos=Array.from({length:layouts[layout].length},(_,i)=>old[i]??null);closeModal();renderCollage()}
 function renderCollage(){const active=pages[page];byId('pageLabel').textContent=`Page ${page+1} of ${pages.length}`;byId('pageExport').textContent=`Export ${pages.length} page${pages.length===1?'':'s'} · demo`;byId('pageBar').innerHTML=pages.map((p,i)=>`<button class="pagepick ${i===page?'on':''}" data-page="${i}"><span class="pgmini">▦</span>Page ${i+1}</button>`).join('')+`<button class="pagepick add" id="newPage"><span class="pgmini">＋</span>Add Page</button>`;byId('pageBar').querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=Number(b.dataset.page);renderCollage()});byId('newPage').onclick=()=>{if(pages.length<20){pages.push({layout:'Full Bleed',photos:[null],gap:3});page=pages.length-1;renderCollage();}};
@@ -379,10 +416,10 @@ handle.onpointerdown=e=>{handle.setPointerCapture(e.pointerId);e.preventDefault(
 handle.onpointermove=e=>{
  if(!handle.hasPointerCapture(e.pointerId))return;
  const r=byId('photoWindow').getBoundingClientRect();
- const x=Math.min(.98,Math.max(.02,(e.clientX-r.left)/r.width));
- const y=Math.min(.98,Math.max(.02,(e.clientY-r.top)/r.height));
- handle.style.left=(x*100)+'%';handle.style.top=(y*100)+'%';
- byId('wash').style.background=`radial-gradient(ellipse at ${x*100}% ${y*100}%,rgba(255,167,100,.38),transparent 59%)`;
+ currentLightPosition().x=Math.min(.98,Math.max(.02,(e.clientX-r.left)/r.width));
+ currentLightPosition().y=Math.min(.98,Math.max(.02,(e.clientY-r.top)/r.height));
+ renderLightPreview();
 };
+
 renderGrid();renderEditor();renderCollage();renderExport();show(new URLSearchParams(window.location.search).get('tab')||'library');});
 </script></body></html>
