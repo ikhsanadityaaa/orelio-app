@@ -5,7 +5,7 @@ enum AppTab: Hashable {
 }
 
 enum FilmCategory: String, CaseIterable, Identifiable {
-    case negative = "Negative", slide = "Slide", instant = "Instant", bw = "B&W"
+    case negative = "Negative", instant = "Instant", bw = "B&W"
     var id: String { rawValue }
 }
 
@@ -21,8 +21,7 @@ enum FilmLook: String, CaseIterable, Codable, Identifiable {
     var category: FilmCategory? {
         switch self {
         case .original: nil
-        case .amber, .forest, .negSoft, .negPortra, .negMatte, .faded, .vintageGolden, .vintageTeal, .vintageMuted: .negative
-        case .chrome, .slideVivid, .slidePastel, .slideCool, .slideDeep: .slide
+        case .amber, .forest, .negSoft, .negPortra, .negMatte, .faded, .vintageGolden, .vintageTeal, .vintageMuted, .chrome, .slideVivid, .slidePastel, .slideCool, .slideDeep: .negative
         case .instantWarm, .instantSoft, .instantPink, .instantDust, .instantBleach: .instant
         case .negCool, .vintage1979, .mono, .monoSoft, .monoHigh, .monoMatte, .monoSilver: .bw
         }
@@ -61,7 +60,9 @@ enum FilmLook: String, CaseIterable, Codable, Identifiable {
         }
     }
     static func inCategory(_ category: FilmCategory) -> [FilmLook] {
-        allCases.filter { $0.category == category }
+        allCases.filter { $0.category == category }.sorted {
+            $0.title.localizedStandardCompare($1.title) == .orderedAscending
+        }
     }
 }
 
