@@ -60,25 +60,43 @@ struct CompositionGridView: View {
                     while yy < bounds.maxY { start(CGPoint(x:x,y:yy),CGPoint(x:x+w,y:yy)); yy += step }
                 }
             case .goldenSpiral:
-                // A logarithmic golden spiral, radius grows by phi every 90°.
-                // Rotate 0/90/180/270°; mirror adds four additional orientations.
-                let phi = (1 + sqrt(5.0)) / 2
-                let turns = ((settings.quarterTurns % 4) + 4) % 4
-                let angle = Double(turns) * .pi / 2
-                let scale = Double(min(w,h)) * 0.67
-                let centerX = Double(bounds.midX), centerY = Double(bounds.midY)
-                let maxTheta = 3.4 * Double.pi
-                var first = true
-                for index in 0...550 {
-                    let theta = -3.5*Double.pi + (maxTheta + 3.5*Double.pi) * Double(index) / 550
-                    let radius = scale * pow(phi, (theta-maxTheta)/(.pi/2))
-                    var px = radius * cos(theta)
-                    let py = radius * sin(theta)
-                    if settings.mirrored { px = -px }
-                    let rx = px*cos(angle)-py*sin(angle)
-                    let ry = px*sin(angle)+py*cos(angle)
-                    let point = CGPoint(x:centerX+rx,y:centerY+ry)
-                    if first { lines.move(to:point); first=false } else { lines.addLine(to:point) }
+                // Fibonacci construction from adjacent 5,3,2,1,1 squares
+                // (8:5 bounding rectangle), rather than a logarithmic spiral.
+                let portrait = h > w
+                let rotations = ((settings.quarterTurns + (portrait ? 1 : 0)) % 4 + 4) % 4
+                let vertical = rotations % 2 != 0
+                let unit = min(w / (vertical ? 5 : 8), h / (vertical ? 8 : 5))
+                let angle = CGFloat(rotations) * (.pi / 2)
+                let ca = cos(angle), sa = sin(angle)
+                func converted(_ ux: CGFloat, _ uy: CGFloat) -> CGPoint {
+                    var dx = (ux - 4) * unit
+                    let dy = (uy - 2.5) * unit
+                    if settings.mirrored { dx = -dx }
+                    return CGPoint(x: bounds.midX + dx * ca - dy * sa,
+                                   y: bounds.midY + dx * sa + dy * ca)
+                }
+                // Rectangles and quarter-circle arcs share precisely the same
+                // transformed coordinates; preserve real circles at any photo ratio.
+                for (sx, sy, side) in [(0.0,0.0,5.0),(5,0,3),(6,3,2),
+                                       (5,3,1),(5,4,1)] {
+                    let x = CGFloat(sx), y = CGFloat(sy), d = CGFloat(side)
+                    let corners = [converted(x,y),converted(x+d,y),
+                                   converted(x+d,y+d),converted(x,y+d)]
+                    lines.move(to: corners[0])
+                    for pt in corners.dropFirst() { lines.addLine(to: pt) }
+                    lines.closeSubpath()
+                }
+                for (cx, cy, radius, firstAngle) in [(5.0,5.0,5.0,Double.pi),
+                                                      (5,3,3,1.5*Double.pi),
+                                                      (6,3,2,0.0),
+                                                      (6,4,1,Double.pi/2)] {
+                    let steps = 24
+                    for i in 0...steps {
+                        let theta = firstAngle + Double(i) * (.pi/2) / Double(steps)
+                        let pt = converted(CGFloat(cx + radius*cos(theta)),
+                                           CGFloat(cy + radius*sin(theta)))
+                        if i == 0 { lines.move(to: pt) } else { lines.addLine(to: pt) }
+                    }
                 }
             }
             let ink = settings.darkLines ? Color.black : Color.white
