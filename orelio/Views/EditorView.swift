@@ -3,15 +3,15 @@ import UIKit
 
 // Film and tools are intentionally separate, as on a dedicated analog editor.
 private enum EditorPanel: String, CaseIterable, Identifiable {
-    case film = "Film", tools = "Tools", lighting = "Lighting", border = "Border", grid = "Grid"
+    case film = "Film", tools = "Tools", lighting = "Lighting", composition = "Composition", border = "Border"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .film: "square.stack.3d.up"
         case .tools: "slider.horizontal.3"
         case .lighting: "sun.max"
+        case .composition: "crop.rotate"
         case .border: "square.dashed"
-        case .grid: "square.grid.3x3"
         }
     }
 }
@@ -150,13 +150,19 @@ struct EditorView: View {
                                     }
                                 } label: {
                                     VStack(spacing: 5) {
-                                        Image(systemName: mode.symbol).font(.system(size: 19))
-                                        Text(mode.rawValue).font(.caption2.weight(.medium))
+                                        Image(systemName: mode.symbol)
+                                            .font(.system(size: 18, weight: panel == mode ? .semibold : .regular))
+                                        Text(mode.rawValue)
+                                            .font(.system(size: 10, weight: panel == mode ? .semibold : .medium, design: .rounded))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
                                     }
-                                    .foregroundStyle(panel == mode ? Color(red: 0.86, green: 0.65, blue: 0.50) : .secondary)
-                                    .frame(maxWidth: .infinity, minHeight: 52)
+                                    .foregroundStyle(panel == mode ? Color(red: 0.87, green: 0.62, blue: 0.45) : .secondary)
+                                    .frame(maxWidth: .infinity, minHeight: 55)
+                                    .background(panel == mode ? Color.orange.opacity(0.11) : .clear,
+                                                in: RoundedRectangle(cornerRadius: 11))
                                     .overlay(alignment: .bottom) {
-                                        if panel == mode { Rectangle().fill(Color.orange.opacity(0.85)).frame(height: 2) }
+                                        if panel == mode { Capsule().fill(Color.orange.opacity(0.9)).frame(width: 25, height: 2) }
                                     }
                                 }
                                 .buttonStyle(.plain)
@@ -171,11 +177,11 @@ struct EditorView: View {
                             case .film: filmPanel
                             case .tools: toolPanel
                             case .lighting: lightingPanel
+                            case .composition: gridPanel
                             case .border: borderPanel
-                            case .grid: gridPanel
                             }
                         }
-                        .frame(height: panel == .lighting || panel == .grid || panel == .border ? 251 : 225)
+                        .frame(height: panel == .lighting || panel == .composition || panel == .border ? 251 : 225)
                         .frame(maxWidth: .infinity)
                         .background(Color(.systemBackground))
                     }
@@ -433,7 +439,7 @@ struct EditorView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Composition Guide").font(.subheadline.weight(.medium))
+                    Label("Composition Guides", systemImage: "viewfinder").font(.subheadline.weight(.medium))
                     Spacer()
                     Picker("Type", selection: $gridKindRaw) {
                         ForEach(CompositionGrid.allCases) { kind in Text(kind.title).tag(kind.rawValue) }
