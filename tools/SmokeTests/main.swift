@@ -90,6 +90,39 @@ var page = CollagePage(layout: .editorial)
 check(page.photoIDs.count == 3, "editorial slots")
 page.changeLayout(.mosaic)
 check(page.photoIDs.count == 4, "new layout slots")
+
+// Collage page controls must use exactly the same geometry in previews and exported JPEGs.
+let legacyPageJSON = """
+{"layout":"splitV","photoIDs":[null,null],"margin":0.035}
+"""
+// Check our new Codable defaults on an old page saved before ratios existed.
+if let oldPage = try? JSONDecoder().decode(CollagePage.self, from: Data(legacyPageJSON.utf8)) {
+    check(oldPage.ratio == .portrait && !oldPage.proportionalSpacing,
+          "old collage pages recover ratio and proportional defaults")
+}
+var proportional = CollagePage(layout: .splitV, margin: 0.05,
+                                ratio: .square, proportionalSpacing: true)
+let canvasSize = CGSize(width: 1000, height: 1000)
+let leftCell = proportional.slotRect(0, canvasSize: canvasSize)
+let rightCell = proportional.slotRect(1, canvasSize: canvasSize)
+let joinedGap = rightCell.minX - leftCell.maxX
+check(abs(joinedGap - 50) < 0.05, "proportional internal seam equals exterior 50px border")
+check(abs(leftCell.minX - 50) < 0.05, "proportional outer margin equals same 50px border")
+proportional.proportionalSpacing = false
+let doubledGap = proportional.slotRect(1, canvasSize: canvasSize).minX -
+                 proportional.slotRect(0, canvasSize: canvasSize).maxX
+check(abs(doubledGap - 100) < 0.05, "non proportional seam doubles as intended")
+for ratio in CollageAspectRatio.allCases {
+    let checkPage = CollagePage(layout: .single, ratio: ratio)
+    let fullCanvas = CGSize(width: 1080, height: 1080 / ratio.ratio)
+    check(checkPage.slotRect(0, canvasSize: fullCanvas).width > 0,
+          "each ratio produces a valid export frame")
+}
+let pageJSON = try JSONEncoder().encode(proportional)
+check(try JSONDecoder().decode(CollagePage.self, from: pageJSON) == proportional,
+      "new collage settings round-trip and preserve IDs")
+print("PASS: global aspect ratios, proportional seams and legacy collage decode")
+
 print("PASS: film catalog, adjustment roundtrip, page layouts")
 
 // v0.5: border settings round-trip and preserve old manifests.
