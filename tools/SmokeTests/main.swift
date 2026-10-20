@@ -128,8 +128,9 @@ var whitePage = CollagePage(layout: .splitVertical)
 var blackPage = CollagePage(layout: .single, background: .black)
 check(whitePage.background == .white && blackPage.background == .black,
       "each page can have its own white or black canvas")
-check(try JSONDecoder().decode(CollagePage.self,
-      from: JSONEncoder().encode(blackPage)).background == .black,
+let blackPageData = try JSONEncoder().encode(blackPage)
+let decodedBlackPage = try JSONDecoder().decode(CollagePage.self, from: blackPageData)
+check(decodedBlackPage.background == .black,
       "black canvas survives JSON round-trip")
 let recoveredPaper = try JSONDecoder().decode(CollagePage.self,
         from: Data(legacyPageJSON.utf8))
