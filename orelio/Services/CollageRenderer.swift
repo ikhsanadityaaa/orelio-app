@@ -43,14 +43,12 @@ final class CollageRenderer {
         var results: [URL] = []
         for (index, page) in pages.enumerated() {
             let width: CGFloat = 1080
-            let height: CGFloat = 1350
+            let height: CGFloat = (width / page.ratio.ratio).rounded()
             let image = makeCanvas(size: CGSize(width: width, height: height)) { context in
-                for (slot, normalized) in page.layout.rects.enumerated() {
+                for slot in page.layout.rects.indices {
                     guard page.photoIDs.indices.contains(slot),
                           let id = page.photoIDs[slot], let photo = byID[id] else { continue }
-                    let safe = normalized.insetBy(dx: CGFloat(page.margin), dy: CGFloat(page.margin))
-                    let rect = CGRect(x: safe.minX * width, y: safe.minY * height,
-                                      width: safe.width * width, height: safe.height * height)
+                    let rect = page.slotRect(slot, canvasSize: CGSize(width: width, height: height))
                     place(photo, in: rect, context: context)
                 }
             }
