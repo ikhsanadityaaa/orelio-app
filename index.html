@@ -222,7 +222,12 @@ function renderEditor(){byId('mainPhoto').src=photos[currentPhoto];fitPhoto();by
 function fitPhoto(){
  const stage=byId('stage'), photo=byId('mainPhoto'), frame=byId('photoWindow');
  if(!photo.naturalWidth||!photo.naturalHeight)return;
- const rw=Math.max(60,stage.clientWidth-24),rh=Math.max(80,stage.clientHeight-18);
+ let rw=Math.max(60,stage.clientWidth-24),rh=Math.max(80,stage.clientHeight-18);
+ // Reserve enough room for an outside frame instead of letting it disappear under the control bar.
+ if(borderState.enabled&&borderState.placement==='outside'){
+  const reserved=Math.ceil(Math.min(rw,rh)*borderState.width/100)+2;
+  rw=Math.max(40,rw-reserved*2);rh=Math.max(40,rh-reserved*2);
+ }
  const scale=Math.min(rw/photo.naturalWidth,rh/photo.naturalHeight);
  frame.style.width=Math.floor(photo.naturalWidth*scale)+'px';
  frame.style.height=Math.floor(photo.naturalHeight*scale)+'px';
@@ -245,7 +250,7 @@ function fibonacciOverlay(w,h){
  const g=unit,tw=8*g,th=5*g;
  const tx=(w-tw)/2,ty=(h-th)/2;
  // Drawing coords in Fibonacci units. x=5 divides the large 5x5 square.
- const cells=[[0,0,5],[5,0,3],[5,3,2],[7,3,1],[7,4,1]];
+ const cells=[[0,0,5],[5,0,3],[6,3,2],[5,3,1],[5,4,1]];
  const squares=cells.map(([x,y,d])=>'<rect x="'+x*g+'" y="'+y*g+'" width="'+d*g+'" height="'+d*g+'"/>').join('');
  // 5->3->2->1->1 circular quarter-arcs, not a logarithmic approximation.
  const arcs=[
@@ -358,10 +363,10 @@ function renderControls(){
   <div class="border-choices"><button class="${borderState.color==='white'?'on':''}" data-color="white">◯ White</button><button class="${borderState.color==='black'?'on':''}" data-color="black">● Black</button></div>
   <div class="sliderrow" style="padding:4px 16px"><label>Thickness <span id="borderVal">${borderState.width}%</span></label><input id="borderWidth" type="range" min="0.2" max="8" step="0.1" value="${borderState.width}"></div>
   <div class="border-note">Inside tidak menambah ukuran foto. Outside memperluas kanvas saat export.</div>`;
-  node.querySelector('#borderEnabled').onchange=e=>{borderState.enabled=e.target.checked;syncOverlay()};
-  node.querySelectorAll('[data-place]').forEach(b=>b.onclick=()=>{borderState.placement=b.dataset.place;renderControls();syncOverlay()});
+  node.querySelector('#borderEnabled').onchange=e=>{borderState.enabled=e.target.checked;fitPhoto();syncOverlay()};
+  node.querySelectorAll('[data-place]').forEach(b=>b.onclick=()=>{borderState.placement=b.dataset.place;renderControls();fitPhoto();syncOverlay()});
   node.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{borderState.color=b.dataset.color;renderControls();syncOverlay()});
-  node.querySelector('#borderWidth').oninput=e=>{borderState.width=Number(e.target.value);byId('borderVal').textContent=e.target.value+'%';syncOverlay()};
+  node.querySelector('#borderWidth').oninput=e=>{borderState.width=Number(e.target.value);byId('borderVal').textContent=e.target.value+'%';fitPhoto();syncOverlay()};
  } else if(panel==='guide'){
   const gridOptions=[['off','Off'],['thirds','Rule of Thirds'],['spiral','Fibonacci Spiral'],['center','Center Marker'],['triangles','Golden Triangles'],['square','Square Grid']];
   node.innerHTML=`<div class="control-line"><b>Composition Grid</b><select id="gridType">${gridOptions.map(([v,t])=>`<option value="${v}" ${guideState.kind===v?'selected':''}>${t}</option>`).join('')}</select></div>
@@ -470,8 +475,8 @@ window.addEventListener('DOMContentLoaded',()=>{
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{panel=b.dataset.panel;renderEditor()});byId('backToLib').onclick=()=>show('library');byId('multi').onclick=()=>{selecting=!selecting;if(!selecting)selected.clear();renderGrid()};byId('importBtn').onclick=()=>toast('Demo sample photos · native import in Xcode app');byId('allBtn').onclick=()=>{selected=new Set(photos.map((_,i)=>i));renderGrid()};byId('copyBtn').onclick=()=>{clipboard=true;toast('Edit settings copied')};byId('resetBtn').onclick=()=>{currentLook='Original';sliders={};borderState={enabled:false,placement:'inside',color:'white',width:1.5};renderEditor()};byId('pasteBtn').onclick=()=>{if(!clipboard){toast('Copy edits in Editor first');return}if(!selected.size){toast('Select photos first');return}modal('Paste Settings',`<p class="hint">Apply selected groups to ${selected.size} photos</p>${['Film look & strength','Tone & color','Grain & effects','Lighting layers','Outline / Border'].map(x=>`<label class="line">${x}<input type="checkbox" checked></label>`).join('')}<button class="action" style="width:100%" id="doPaste">Apply to ${selected.size} photos</button>`);byId('doPaste').onclick=()=>{closeModal();toast(`Applied edit recipe to ${selected.size} photos · demo`)}};byId('selExport').onclick=()=>show('export');byId('closeModal').onclick=closeModal;byId('chooseLayout').onclick=layoutPicker;byId('prevPage').onclick=()=>{[pages[page-1],pages[page]]=[pages[page],pages[page-1]];page--;renderCollage()};byId('nextPage').onclick=()=>{[pages[page],pages[page+1]]=[pages[page+1],pages[page]];page++;renderCollage()};byId('removePage').onclick=()=>{pages.splice(page,1);page=Math.min(page,pages.length-1);renderCollage()};byId('gapSlider').oninput=e=>{pages[page].gap=Number(e.target.value);renderCollage()};byId('collageRatio').onchange=e=>{collageRatio=e.target.value;renderCollage()};byId('proportionalSpacing').onchange=e=>{proportionalSpacing=e.target.checked;renderCollage()};byId('pageExport').onclick=()=>toast(`Simulated ${pages.length} page export · use iOS app to create files`);byId('startExport').onclick=batch;
 const handle=byId('lightHandle');
 const img=byId('mainPhoto');
-img.addEventListener('load',()=>{fitPhoto();syncOverlay()});
-window.addEventListener('resize',()=>{fitPhoto();syncOverlay()});
+img.addEventListener('load',()=>{fitPhoto();syncOverlay();renderLightPreview()});
+window.addEventListener('resize',()=>{fitPhoto();syncOverlay();renderLightPreview();renderCollage()});
 handle.onpointerdown=e=>{handle.setPointerCapture(e.pointerId);e.preventDefault()};
 handle.onpointermove=e=>{
  if(!handle.hasPointerCapture(e.pointerId))return;
