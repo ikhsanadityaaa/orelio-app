@@ -12,6 +12,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Show Xcode toolchain
         run: xcodebuild -version
+      - name: Model and collage regression tests
+        run: |
+          swiftc -o /tmp/orelio-model-smoke \
+            orelio/Models/Models.swift \
+            orelio/Models/BatchRecipeOperation.swift \
+            tools/SmokeTests/main.swift
+          /tmp/orelio-model-smoke
       - name: Compile iOS Simulator app without code signing
         shell: bash
         run: |
