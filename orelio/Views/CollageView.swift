@@ -13,10 +13,24 @@ struct CollageView: View {
     @State private var isWorking = false
     @State private var output: [URL] = []
     @State private var showShare = false
+    @State private var showExportOptions = false
+    @State private var selectedPageIDs: Set<UUID> = []
     @State private var errorText: String?
     private let projectKey = "orelio.collage.pages.v03"
 
     private var currentPage: CollagePage { pages[pageIndex] }
+    private enum ExportScope { case current, selected, all }
+    private func toggleSelection(for id: UUID) {
+        if selectedPageIDs.contains(id) { selectedPageIDs.remove(id) }
+        else { selectedPageIDs.insert(id) }
+    }
+    private func exportIndices(for scope: ExportScope) -> [Int] {
+        switch scope {
+        case .current: [pageIndex]
+        case .selected: pages.indices.filter { selectedPageIDs.contains(pages[$0].id) }
+        case .all: Array(pages.indices)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,32 +44,50 @@ struct CollageView: View {
                         Spacer()
                         Text("OFFLINE").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
                     }
+                    HStack {
+                        Label("\(selectedPageIDs.count) selected", systemImage: "checkmark.circle")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Select All") { selectedPageIDs = Set(pages.map(\.id)) }.font(.caption)
+                        Button("Clear") { selectedPageIDs.removeAll() }
+                            .font(.caption).disabled(selectedPageIDs.isEmpty)
+                    }
                     ScrollView(.horizontal) {
                         HStack(spacing: 10) {
                             ForEach(pages.indices, id: \.self) { index in
-                                Button { pageIndex = index } label: {
-                                    VStack(spacing: 5) {
+                                VStack(spacing: 5) {
+                                    Button { pageIndex = index } label: {
                                         RoundedRectangle(cornerRadius: 7)
-                                            .fill(index == pageIndex ? Color.orange.opacity(0.35) : .white.opacity(0.1))
-                                            .frame(width: 60, height: 78)
-                                            .overlay(Image(systemName: "square.on.square").foregroundStyle(.white))
-                                        Text("Page \(index + 1)").font(.caption2)
-                                    }
-                                    .padding(4)
-                                    .background(index == pageIndex ? .white.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 9))
-                                }.buttonStyle(.plain)
+                                            .fill(pages[index].background == .black ? Color.black : Color.white)
+                                            .frame(width: 64, height: 79)
+                                            .overlay {
+                                                Image(systemName: "square.on.square")
+                                                    .foregroundStyle(pages[index].background == .black ? Color.white : Color.black)
+                                            }
+                                            .overlay {
+                                                RoundedRectangle(cornerRadius: 7)
+                                                    .strokeBorder(index == pageIndex ? Color.orange : Color.gray.opacity(0.4),
+                                                                  lineWidth: index == pageIndex ? 2 : 1)
+                                            }
+                                    }.buttonStyle(.plain)
+                                    Button { toggleSelection(for: pages[index].id) } label: {
+                                        Label("Page \(index + 1)",
+                                              systemImage: selectedPageIDs.contains(pages[index].id) ?
+                                              "checkmark.circle.fill" : "circle")
+                                            .font(.caption2)
+                                            .foregroundStyle(selectedPageIDs.contains(pages[index].id) ?
+                                                             Color.orange : Color.primary)
+                                    }.buttonStyle(.plain)
+                                }.padding(3)
                             }
-                            Button {
-                                guard pages.count < 20 else { return }
-                                addContinuationPage()
-                            } label: {
+                            Button { addContinuationPage() } label: {
                                 VStack(spacing: 5) {
                                     RoundedRectangle(cornerRadius: 7)
                                         .strokeBorder(style: StrokeStyle(lineWidth: 1.4, dash: [5, 4]))
-                                        .frame(width: 60, height: 78)
+                                        .frame(width: 64, height: 79)
                                         .overlay(Image(systemName: "plus"))
                                     Text("New Page").font(.caption2)
-                                }.padding(4)
+                                }.padding(3)
                             }.buttonStyle(.plain).disabled(pages.count >= 20)
                         }
                     }.scrollIndicators(.hidden)
@@ -84,6 +116,20 @@ struct CollageView: View {
                                 output = []
                             }))
                             .font(.caption)
+                    }
+                    HStack(spacing: 10) {
+                        Text("Page Background").font(.subheadline.weight(.medium))
+                        Spacer()
+                        Picker("Page Background", selection: Binding(
+                            get: { currentPage.background },
+                            set: { value in
+                                pages[pageIndex].background = value
+                                output = []
+                            })) {
+                            ForEach(CollageBackground.allCases) { color in
+                                Text(color.title).tag(color)
+                            }
+                        }.pickerStyle(.segmented).frame(maxWidth: 180)
                     }
                     Text("Proportional makes every outer margin and shared image seam equally thick.")
                         .font(.caption2).foregroundStyle(.secondary)
@@ -115,8 +161,8 @@ struct CollageView: View {
                             Label("Share / Save Pages", systemImage: "square.and.arrow.up")
                         }.buttonStyle(OrelioActionButtonStyle())
                     }
-                    Button { exportPages() } label: {
-                        Label("Export \(pages.count) Page\(pages.count == 1 ? "" : "s")", systemImage: "square.and.arrow.up")
+                    Button { showExportOptions = true } label: {
+                        Label("Export Pages", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
                     }.buttonStyle(OrelioActionButtonStyle(tone: .primary)).disabled(isWorking || pages.allSatisfy { $0.photoIDs.allSatisfy { $0 == nil } })
                 }.padding(16)
@@ -126,8 +172,21 @@ struct CollageView: View {
             .sheet(isPresented: $showLayouts) { layoutSheet }
             .sheet(isPresented: $showPhotos) { photoSheet }
             .sheet(isPresented: $showShare) { ActivityShareSheet(files: output) }
+            .confirmationDialog("Export Collage", isPresented: $showExportOptions,
+                                titleVisibility: .visible) {
+                Button("Export Current Page") { exportPages(scope: .current) }
+                Button("Export Selected Pages (\(selectedPageIDs.count))") {
+                    exportPages(scope: .selected)
+                }.disabled(selectedPageIDs.isEmpty)
+                Button("Export All Pages (\(pages.count))") { exportPages(scope: .all) }
+            } message: {
+                Text("Export pages as JPG using each page's background and selected ratio.")
+            }
             .onAppear { loadProject() }
-            .onChange(of: pages) { _, _ in saveProject() }
+            .onChange(of: pages) { _, _ in
+                selectedPageIDs.formIntersection(Set(pages.map(\.id)))
+                saveProject()
+            }
         }
     }
 
@@ -135,7 +194,7 @@ struct CollageView: View {
         GeometryReader { geo in
             let bounds = CGSize(width: geo.size.width, height: geo.size.height)
             ZStack(alignment: .topLeading) {
-                Color(red: 0.95, green: 0.93, blue: 0.89)
+                (currentPage.background == .black ? Color.black : Color.white)
                 ForEach(0..<currentPage.layout.slotCount, id: \.self) { i in
                     let rect = currentPage.slotRect(i, canvasSize: bounds)
                     let width = max(1, rect.width)
@@ -256,7 +315,8 @@ struct CollageView: View {
             layout: photoID == nil ? prior.layout : .single,
             photoIDs: photoID.map { [$0] } ?? [],
             margin: prior.margin, ratio: prior.ratio,
-            proportionalSpacing: prior.proportionalSpacing)
+            proportionalSpacing: prior.proportionalSpacing,
+            background: prior.background)
         pages.insert(created, at: pageIndex + 1)
         pageIndex += 1
         output = []
@@ -284,17 +344,25 @@ struct CollageView: View {
             UserDefaults.standard.set(encoded, forKey: projectKey)
         }
     }
-    private func exportPages() {
+    private func exportPages(scope: ExportScope) {
         guard !isWorking else { return }
+        let indices = exportIndices(for: scope)
+        guard !indices.isEmpty else {
+            errorText = "Select at least one page before exporting."
+            return
+        }
         isWorking = true
         errorText = nil
         output = []
-        let selectedPages = pages
+        let subset = indices.map { pages[$0] }
+        let pageNumbers = indices.map { $0 + 1 }
         let photos = store.photos
         Task {
             do {
                 output = try await Task.detached(priority: .userInitiated) {
-                    try CollageRenderer.shared.renderPages(pages: selectedPages, photos: photos)
+                    try CollageRenderer.shared.renderPages(pages: subset,
+                                                           photos: photos,
+                                                           pageNumbers: pageNumbers)
                 }.value
             } catch { errorText = error.localizedDescription }
             isWorking = false
