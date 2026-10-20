@@ -348,6 +348,12 @@ enum CollageAspectRatio: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum CollageBackground: String, Codable, CaseIterable, Identifiable {
+    case white, black
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
 struct CollagePage: Codable, Equatable, Identifiable {
     var id: UUID = UUID()
     var layout: CollageLayout = .single
@@ -356,16 +362,18 @@ struct CollagePage: Codable, Equatable, Identifiable {
     var margin: Double = 0.035
     var ratio: CollageAspectRatio = .portrait
     var proportionalSpacing: Bool = false
+    var background: CollageBackground = .white
 
     init(id: UUID = UUID(), layout: CollageLayout = .single, photoIDs: [UUID?] = [],
          margin: Double = 0.035, ratio: CollageAspectRatio = .portrait,
-         proportionalSpacing: Bool = false) {
+         proportionalSpacing: Bool = false, background: CollageBackground = .white) {
         self.id = id
         self.layout = layout
         self.photoIDs = Array((photoIDs + Array(repeating: nil, count: layout.slotCount)).prefix(layout.slotCount))
         self.margin = margin
         self.ratio = ratio
         self.proportionalSpacing = proportionalSpacing
+        self.background = background
     }
 
     // Older v0.3 collage projects do not have the new global page settings.
@@ -378,6 +386,7 @@ struct CollagePage: Codable, Equatable, Identifiable {
         margin = try c.decodeIfPresent(Double.self, forKey: .margin) ?? 0.035
         ratio = try c.decodeIfPresent(CollageAspectRatio.self, forKey: .ratio) ?? .portrait
         proportionalSpacing = try c.decodeIfPresent(Bool.self, forKey: .proportionalSpacing) ?? false
+        background = try c.decodeIfPresent(CollageBackground.self, forKey: .background) ?? .white
     }
 
     mutating func changeLayout(_ value: CollageLayout) {
