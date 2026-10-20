@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { Blob } from 'node:buffer';
+import { TextEncoder } from 'node:util';
 import { Script, createContext, runInContext } from 'node:vm';
 
 const html=readFileSync('index.html','utf8');
@@ -29,10 +31,10 @@ const document={
  querySelectorAll(){return []}
 };
 const window={addEventListener(){},location:{search:''}};
-const sandbox=createContext({document,window,console,URLSearchParams,Math,Set,Map,
+const sandbox=createContext({document,window,console,URLSearchParams,Math,Set,Map,Blob,TextEncoder,Uint8Array,DataView,
  setTimeout(){return 0},clearTimeout(){}});
 new Script(match[1],{filename:'orelio-preview-inline.js'}).runInContext(sandbox,{timeout:10000});
-const api=runInContext('({renderLightPreview,currentLightPosition,collagePixelRect,fibonacciOverlay,syncOverlay,renderCollage,addContinuationPage})',sandbox);
+const api=runInContext('({renderLightPreview,currentLightPosition,collagePixelRect,fibonacciOverlay,syncOverlay,renderCollage,addContinuationPage,pageIndexesForExport,collageZip,collageCrc32})',sandbox);
 
 const near=(a,b)=>Math.abs(a-b)<0.0001;
 const [r1,r2]=[
@@ -78,4 +80,32 @@ assert.equal(runInContext('pages.length',sandbox),2,'new continuation page inser
 assert.equal(runInContext('page',sandbox),1,'new page selected after insertion');
 assert.equal(node('collageRatio').value,'9:16','new page inherits project ratio');
 assert.ok(node('canvas').innerHTML.includes('class="slot"'),'new page renders editable slots');
+
+// New per-page paper color, selection scope and ZIP container must behave in preview.
+runInContext("pages[0].background='black';page=0",sandbox);
+api.renderCollage();
+assert.equal(node('canvas').style.background,'#000','active page paper can be black');
+api.addContinuationPage();
+assert.equal(runInContext('pages[1].background',sandbox),'black','new page inherits previous paper');
+runInContext("pages[1].background='white';selectedCollagePages.add(pages[0].id)",sandbox);
+api.renderCollage();
+assert.equal(node('canvas').style.background,'#fff','different page can have white paper');
+assert.deepEqual(Array.from(api.pageIndexesForExport('current')),[1],'current page scope');
+assert.deepEqual(Array.from(api.pageIndexesForExport('selected')),[0],'selected pages scope uses page IDs');
+assert.deepEqual(Array.from(api.pageIndexesForExport('all')),[0,1],'all pages scope');
+runInContext("page=0;[pages[0],pages[1]]=[pages[1],pages[0]];",sandbox);
+assert.deepEqual(Array.from(api.pageIndexesForExport('selected')),[1],
+                 'selection stays attached to page after reordering');
+assert.equal(api.collageCrc32(new Uint8Array([49,50,51,52,53,54,55,56,57])),
+             0xcbf43926,'ZIP CRC32 standard vector');
+const zipped=await api.collageZip([
+ {name:'orelio-page-01.jpg',blob:new Blob([new Uint8Array([1,2,3])])},
+ {name:'orelio-page-02.jpg',blob:new Blob([new Uint8Array([4,5])])}
+]);
+const zipBytes=await zipped.arrayBuffer(),view=new DataView(zipBytes);
+assert.equal(view.getUint32(0,true),0x04034b50,'ZIP local file header');
+assert.equal(view.getUint32(zipBytes.byteLength-22,true),0x06054b50,'ZIP end of central directory');
+assert.equal(view.getUint16(zipBytes.byteLength-12,true),2,'ZIP contains selected two files');
+console.log('PASS: per-page black/white background, selected export scopes, stable selection and valid ZIP');
+
 console.log('PASS: browser JS syntax, Fibonacci, stable round Lighting, visible borders, ratio, gap symmetry, sequential pages');
