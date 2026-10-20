@@ -8,38 +8,17 @@ private struct FilmCanisterIcon: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 2.5)
-                .fill(.primary.opacity(0.12))
-                .overlay { RoundedRectangle(cornerRadius: 2.5).strokeBorder(lineWidth: 1.5) }
-                .frame(width: 12, height: 17)
-                .offset(x: -3, y: 2.5)
-            RoundedRectangle(cornerRadius: 1.0)
-                .fill(.primary.opacity(0.85))
-                .frame(width: 7.5, height: 3)
-                .offset(x: -3, y: -8)
-            Capsule().fill(.primary.opacity(0.7))
-                .frame(width: 11, height: 1.4)
-                .offset(x: -3, y: -2.5)
-            Capsule().fill(.primary.opacity(0.7))
-                .frame(width: 11, height: 1.4)
-                .offset(x: -3, y: 8.5)
+                .strokeBorder(Color.white, lineWidth: 1.7)
+                .frame(width: 15, height: 17)
+                .offset(y: 2)
             RoundedRectangle(cornerRadius: 0.9)
-                .fill(.primary.opacity(0.22))
-                .frame(width: 8, height: 5.5)
-                .offset(x: -3, y: 2.5)
-            Path { path in
-                path.move(to: CGPoint(x: 15, y: 7))
-                path.addQuadCurve(to: CGPoint(x: 21, y: 12),
-                                  control: CGPoint(x: 21, y: 6))
-                path.addLine(to: CGPoint(x: 21, y: 21))
-            }
-            .stroke(.primary, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-            .frame(width: 24, height: 24)
-            VStack(spacing: 2.6) {
-                Capsule().fill(.primary).frame(width: 3, height: 1.1)
-                Capsule().fill(.primary).frame(width: 3, height: 1.1)
-                Capsule().fill(.primary).frame(width: 3, height: 1.1)
-            }
-            .offset(x: 9, y: 3.5)
+                .fill(Color.white)
+                .frame(width: 7, height: 3)
+                .offset(y: -8)
+            Rectangle()
+                .fill(Color.white)
+                .frame(width: 15, height: 1.7)
+                .offset(y: -3)
         }
         .frame(width: 24, height: 24)
         .accessibilityHidden(true)
@@ -299,73 +278,70 @@ struct EditorView: View {
         }.padding(.top, 9)
     }
 
-    private func filmBadgeColor(_ look: FilmLook) -> Color {
-        switch look {
-        case .amber, .negMatte, .faded, .vintageGolden: Color(red: 0.98, green: 0.79, blue: 0.21)
-        case .forest, .vintageTeal: Color(red: 0.23, green: 0.60, blue: 0.27)
-        case .negSoft, .instantPink, .vintageMuted: Color(red: 0.81, green: 0.29, blue: 0.18)
-        case .negPortra, .chrome, .slideCool: Color(red: 0.24, green: 0.42, blue: 0.61)
-        case .negCool, .mono, .monoHigh, .monoMatte, .monoSilver, .monoSoft: Color(red: 0.29, green: 0.30, blue: 0.32)
-        case .slideVivid, .slidePastel, .slideDeep: Color(red: 0.31, green: 0.53, blue: 0.65)
-        default: Color(red: 0.72, green: 0.49, blue: 0.40)
-        }
-    }
 
-    private func filmISO(_ look: FilmLook) -> String {
-        let last = String(look.title.split(separator: " ").last ?? "")
-        return !last.isEmpty && last.allSatisfy({ $0.isNumber }) ? last : ""
+    // Unified brand-family-inspired bar colors, outside / ABOVE every thumbnail.
+    // Each display name maps deterministically to one family; no per-preset random palette.
+    private func filmBarColor(_ look: FilmLook) -> Color {
+        let family = String(look.title.split(separator: " ").first ?? "")
+        switch family {
+        case "Gold", "Porta", "Ektra", "Kodach", "Colorplus", "Procolor", "Vision",
+             "Color", "Trix", "Tmax":
+            return Color(red: 0.961, green: 0.773, blue: 0.094) // Kodak-inspired yellow
+        case "Fujia", "Provia", "Privia", "Velvia", "Astia", "Superia", "Reala",
+             "Acros", "Instax", "Wide":
+            return Color(red: 0.176, green: 0.596, blue: 0.333) // Fuji-inspired green
+        case "Agfa":
+            return Color(red: 0.831, green: 0.310, blue: 0.310) // Red
+        case "Insta", "Polax", "SX", "OneStep":
+            return Color(red: 0.847, green: 0.773, blue: 0.643) // Instant cream
+        case "Delta", "HP5", "PanF", "Panchro":
+            return Color(red: 0.59, green: 0.59, blue: 0.59) // Monochrome silver
+        default:
+            return Color(red: 0.69, green: 0.69, blue: 0.69) // Neutral/original
+        }
     }
 
     private func filmButton(_ look: FilmLook) -> some View {
         let selected = store.activePhoto?.recipe.look == look
-        let iso = filmISO(look)
-        let badge = filmBadgeColor(look)
-        let darkText = look == .amber || look == .negMatte || look == .faded || look == .vintageGolden
         return Button {
             guard let id = store.activeID else { return }
             store.updateRecipe(for: id) { $0.look = look }
         } label: {
-            VStack(spacing: 6) {
-                ZStack(alignment: .topLeading) {
-                    Group {
-                        if let photo = store.activePhoto,
-                           let thumbnail = UIImage(contentsOfFile: AppFolders.thumbnail(photo).path) {
-                            Image(uiImage: thumbnail)
-                                .resizable()
-                                .scaledToFill()
-                                .saturation(look.category == .bw || look == .negCool ? 0 : look.category == .vintage ? 0.7 : 0.9)
-                                .overlay(look.category == .instant ? Color.orange.opacity(0.12) : Color.clear)
-                        } else {
-                            Rectangle().fill(Color.gray.opacity(0.2))
-                        }
-                    }
-                    .frame(width: 80, height: 85)
-                    .clipped()
-                    if !iso.isEmpty {
-                        Text(iso)
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundStyle(darkText ? Color.black : Color.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(badge, in: RoundedRectangle(cornerRadius: 6))
-                            .padding(5)
+            VStack(spacing: 5) {
+                Capsule()
+                    .fill(filmBarColor(look))
+                    .frame(width: 78, height: 5)
+                    .accessibilityHidden(true)
+                Group {
+                    if let photo = store.activePhoto,
+                       let thumbnail = UIImage(contentsOfFile: AppFolders.thumbnail(photo).path) {
+                        Image(uiImage: thumbnail)
+                            .resizable()
+                            .scaledToFill()
+                            .saturation(look.category == .bw || look == .negCool ? 0 : look.category == .vintage ? 0.7 : 0.9)
+                            .overlay(look.category == .instant ? Color.orange.opacity(0.12) : Color.clear)
+                    } else {
+                        Rectangle().fill(Color.gray.opacity(0.2))
                     }
                 }
                 .frame(width: 80, height: 85)
+                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 9))
                 .overlay {
                     RoundedRectangle(cornerRadius: 9)
                         .strokeBorder(selected ? Color.white : Color.clear, lineWidth: 2)
                 }
+
                 Text(look.title)
                     .font(.system(size: 11, weight: selected ? .semibold : .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
                     .foregroundStyle(selected ? Color.primary : Color.secondary)
                     .frame(width: 88)
-            }.frame(width: 88)
-        }.buttonStyle(.plain)
+            }
+            .frame(width: 88)
+        }
+        .buttonStyle(.plain)
         .accessibilityLabel("\(look.title) preset")
     }
 
