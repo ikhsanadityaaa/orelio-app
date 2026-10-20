@@ -12,7 +12,7 @@
 ## Implemented in project source
 
 - Removed in-app brand wordmark from working-screen UI (the v0.2 native screen already used generic navigation titles).
-- 27 original film grade definitions across five film families.
+- 27 film looks including Original, arranged into four visible tabs: Negative, Slide, Instant and B&W. Former Vintage color looks appear under Negative; all monochrome looks appear under B&W. Existing recipe IDs remain unchanged.
 - Film strength plus expanded adjustment state and local Core Image processing.
 - Model migration/defaults supporting v0.1 and v0.2 recipe manifests.
 - Selective paste now transfers all new groups of adjustments.
