@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 enum AppTab: Hashable {
     case library, editor, collage, export
