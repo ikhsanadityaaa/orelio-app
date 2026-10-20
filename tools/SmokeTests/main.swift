@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 func check(_ condition: @autoclosure () -> Bool, _ message: String) {
     guard condition() else { fatalError("FAILED: \(message)") }
