@@ -146,6 +146,13 @@ section[data-view="edit"] .paneltab.on{background:transparent;color:#fff;box-sha
 .paper-swatch.on{border-color:#e8ab80;box-shadow:inset 0 0 0 1px #e8ab80}
 .paper-circle{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid #aaa}
 .paper-circle.white{background:#fff}.paper-circle.black{background:#000}
+
+.collage-export-options{display:flex;flex-direction:column;gap:9px}
+.collage-export-options button{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:9px;border-radius:12px;border:1px solid #574237;background:#30251f;color:#fff;text-align:left;padding:13px 10px}
+.collage-export-options button>span{color:#e4a985;font-size:20px}
+.collage-export-options button>b{font-size:13px}
+.collage-export-options button>small{color:#c4b1a5;font-size:10px;white-space:nowrap}
+.collage-export-options button:disabled{opacity:.4;cursor:not-allowed}
 </style></head><body><div class="wrap"><div class="subnote">Interactive iPhone UI prototype · v0.5</div><div class="device"><div class="notch"></div><div class="status"><span>9:41</span><span>▂▃▅ ◉ ▰</span></div><div class="app">
 <section class="screen on" data-view="library"><div class="top"><strong>Library</strong><div class="right"><span class="tiny">● OFFLINE</span><button class="iconbtn" id="multi">Select</button><button class="iconbtn" id="importBtn">＋</button></div></div><div class="inner"><div class="eyebrow">YOUR PHOTOGRAPHS</div><div class="hint">12 photos · Local collection</div></div><div class="scroll"><div class="photo-grid" id="grid"></div></div><div class="tray" id="selectionTray"><div class="tray-row"><span id="selectCount" class="muted">0 selected</span><button class="textbtn" id="allBtn"><span aria-hidden="true">◉</span> Select all</button></div><div class="tray-row"><button class="action action-with-icon" id="pasteBtn"><span class="btnicon" aria-hidden="true">⧉</span><span>Paste edits</span></button><button class="plain action-with-icon" id="selExport"><span class="btnicon" aria-hidden="true">⇧</span><span>Batch export</span></button></div></div></section>
 <section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon modeicon--film"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="9" width="16" height="19" rx="3"/><rect x="13" y="5" width="6" height="4" rx="1" fill="currentColor" stroke="none"/><path d="M8 15h16"/></svg></span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Composition</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
@@ -499,11 +506,112 @@ function renderCollage(){
  });
  byId('prevPage').disabled=page===0;byId('nextPage').disabled=page===pages.length-1;byId('removePage').disabled=pages.length===1;
 }
+// Real client-side collage export. Multi-page jobs are packaged as one ZIP.
+let collageExportBusy=false;
+function pageIndexesForExport(mode){
+ if(mode==='current')return [page];
+ if(mode==='selected')return pages.map((p,i)=>selectedCollagePages.has(p.id)?i:-1).filter(i=>i>=0);
+ if(mode==='all')return pages.map((_,i)=>i);
+ return [];
+}
+function openCollageExportMenu(){
+ const count=selectedCollagePages.size;
+ const choices=[
+  ['current','▣','Export Current Page','Page '+(page+1)],
+  ['selected','☑','Export Selected Pages',count+' selected'],
+  ['all','▦','Export All Pages',pages.length+' pages']
+ ];
+ modal('Export Collage','<p class="hint">Choose pages to export as JPG, preserving their backgrounds and shared ratio.</p>'+
+  '<div class="collage-export-options">'+choices.map(item=>
+   '<button data-collage-export="'+item[0]+'" '+(item[0]==='selected'&&!count?'disabled':'')+'>'+
+   '<span>'+item[1]+'</span><b>'+item[2]+'</b><small>'+item[3]+'</small></button>').join('')+'</div>');
+ byId('modalContent').querySelectorAll('[data-collage-export]').forEach(b=>b.onclick=()=>{
+  const scope=b.dataset.collageExport;closeModal();exportCollageScope(scope);
+ });
+}
+function downloadCollageBlob(blob,name){
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),6000);
+}
+async function renderCollageJpeg(index){
+ const config=pages[index],ratio=collageRatio.split(':').map(Number);
+ const canvas=document.createElement('canvas');
+ canvas.width=1080;canvas.height=Math.round(1080*ratio[1]/ratio[0]);
+ const ctx=canvas.getContext('2d');
+ if(!ctx)throw Error('Canvas unavailable');
+ ctx.fillStyle=config.background==='black'?'#000':'#fff';
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ for(const [i,rect] of layouts[config.layout].entries()){
+  if(config.photos[i]==null)continue;
+  const img=new Image();
+  await new Promise((resolve,reject)=>{
+   img.onload=resolve;img.onerror=()=>reject(Error('Photo could not be loaded'));
+   img.src=photos[config.photos[i]];
+  });
+  const slot=collagePixelRect(rect,canvas.width,canvas.height,config.gap,proportionalSpacing);
+  const scale=Math.max(slot.width/img.naturalWidth,slot.height/img.naturalHeight);
+  const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
+  ctx.save();ctx.beginPath();ctx.rect(slot.left,slot.top,slot.width,slot.height);ctx.clip();
+  ctx.drawImage(img,slot.left+(slot.width-dw)/2,slot.top+(slot.height-dh)/2,dw,dh);
+  ctx.restore();
+ }
+ return new Promise((resolve,reject)=>
+  canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not encode JPEG')),'image/jpeg',.93));
+}
+function collageCrc32(bytes){
+ let crc=0xffffffff;
+ for(const n of bytes){crc^=n;for(let k=0;k<8;k++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}
+ return (crc^0xffffffff)>>>0;
+}
+async function collageZip(files){
+ const encode=new TextEncoder(),local=[],central=[];
+ let offset=0,centralSize=0;
+ for(const file of files){
+  const name=encode.encode(file.name),data=new Uint8Array(await file.blob.arrayBuffer());
+  const crc=collageCrc32(data);
+  const header=new Uint8Array(30+name.length),d=new DataView(header.buffer);
+  d.setUint32(0,0x04034b50,true);d.setUint16(4,20,true);d.setUint16(6,0x0800,true);
+  d.setUint32(14,crc,true);d.setUint32(18,data.length,true);
+  d.setUint32(22,data.length,true);d.setUint16(26,name.length,true);
+  header.set(name,30);local.push(header,data);
+  const record=new Uint8Array(46+name.length),c=new DataView(record.buffer);
+  c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);
+  c.setUint16(8,0x0800,true);c.setUint32(16,crc,true);
+  c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);
+  c.setUint16(28,name.length,true);c.setUint32(42,offset,true);record.set(name,46);
+  central.push(record);centralSize+=record.length;offset+=header.length+data.length;
+ }
+ const end=new Uint8Array(22),d=new DataView(end.buffer);
+ d.setUint32(0,0x06054b50,true);d.setUint16(8,files.length,true);
+ d.setUint16(10,files.length,true);d.setUint32(12,centralSize,true);d.setUint32(16,offset,true);
+ return new Blob([...local,...central,end],{type:'application/zip'});
+}
+async function exportCollageScope(mode){
+ if(collageExportBusy)return;
+ const indices=pageIndexesForExport(mode);
+ if(!indices.length){toast('Select at least one page');return;}
+ collageExportBusy=true;byId('pageExport').disabled=true;
+ try{
+  const files=[];
+  for(const index of indices){
+   const blob=await renderCollageJpeg(index);
+   files.push({name:'orelio-page-'+String(index+1).padStart(2,'0')+'.jpg',blob});
+  }
+  if(files.length===1)downloadCollageBlob(files[0].blob,files[0].name);
+  else downloadCollageBlob(await collageZip(files),'orelio-collage-'+mode+'.zip');
+  toast(files.length+' page'+(files.length>1?'s':'')+' exported');
+ }catch(error){
+  console.error('Collage export failed',error);
+  toast('Export failed: '+(error.message||'unknown error'));
+ }finally{collageExportBusy=false;byId('pageExport').disabled=false;}
+}
 function layoutPicker(){modal('Choose Layout',`<div class="layoutlist">${Object.entries(layouts).map(([name,rects])=>`<button class="layoutbutton ${pages[page].layout===name?'on':''}" data-layout="${name}"><div class="layoutthumb">${rects.map(([x,y,w,h])=>`<i style="left:${(x+.018)*100}%;top:${(y+.018)*100}%;width:${(w-.036)*100}%;height:${(h-.036)*100}%"></i>`).join('')}</div><span>${name}</span></button>`).join('')}</div>`);byId('modalContent').querySelectorAll('[data-layout]').forEach(x=>x.onclick=()=>setLayout(x.dataset.layout))}
 function renderExport(){let arr=selected.size?[...selected]:photos.map((_,i)=>i);byId('exportSummary').textContent=`${arr.length} photos ready · originals preserved`;byId('selectedStrip').innerHTML=arr.slice(0,6).map(i=>`<img src="${photos[i]}">`).join('')}
 function batch(){if(expTimer)return;let count=selected.size||12,i=0;byId('startExport').disabled=true;expTimer=setInterval(()=>{i++;byId('progressTrack').style.width=`${i/count*100}%`;byId('progressText').textContent=`${i} of ${count} photos (preview)`;if(i>=count){clearInterval(expTimer);expTimer=null;byId('startExport').disabled=false;toast('Simulation done · no files written')}},170)}
 window.addEventListener('DOMContentLoaded',()=>{
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{panel=b.dataset.panel;renderEditor()});byId('backToLib').onclick=()=>show('library');byId('multi').onclick=()=>{selecting=!selecting;if(!selecting)selected.clear();renderGrid()};byId('importBtn').onclick=()=>toast('Demo sample photos · native import in Xcode app');byId('allBtn').onclick=()=>{selected=new Set(photos.map((_,i)=>i));renderGrid()};byId('copyBtn').onclick=()=>{clipboard=true;toast('Edit settings copied')};byId('resetBtn').onclick=()=>{currentLook='Original';sliders={};borderState={enabled:false,placement:'inside',color:'white',width:1.5};renderEditor()};byId('pasteBtn').onclick=()=>{if(!clipboard){toast('Copy edits in Editor first');return}if(!selected.size){toast('Select photos first');return}modal('Paste Settings',`<p class="hint">Apply selected groups to ${selected.size} photos</p>${['Film look & strength','Tone & color','Grain & effects','Lighting layers','Outline / Border'].map(x=>`<label class="line">${x}<input type="checkbox" checked></label>`).join('')}<button class="action" style="width:100%" id="doPaste">Apply to ${selected.size} photos</button>`);byId('doPaste').onclick=()=>{closeModal();toast(`Applied edit recipe to ${selected.size} photos · demo`)}};byId('selExport').onclick=()=>show('export');byId('closeModal').onclick=closeModal;byId('chooseLayout').onclick=layoutPicker;byId('prevPage').onclick=()=>{[pages[page-1],pages[page]]=[pages[page],pages[page-1]];page--;renderCollage()};byId('nextPage').onclick=()=>{[pages[page],pages[page+1]]=[pages[page+1],pages[page]];page++;renderCollage()};byId('removePage').onclick=()=>{const removed=pages.splice(page,1)[0];if(removed)selectedCollagePages.delete(removed.id);page=Math.min(page,pages.length-1);renderCollage()};byId('gapSlider').oninput=e=>{pages[page].gap=Number(e.target.value);renderCollage()};byId('collageRatio').onchange=e=>{collageRatio=e.target.value;renderCollage()};byId('proportionalSpacing').onchange=e=>{proportionalSpacing=e.target.checked;renderCollage()};byId('pageExport').onclick=()=>toast(`Simulated ${pages.length} page export · use iOS app to create files`);byId('startExport').onclick=batch;
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{panel=b.dataset.panel;renderEditor()});byId('backToLib').onclick=()=>show('library');byId('multi').onclick=()=>{selecting=!selecting;if(!selecting)selected.clear();renderGrid()};byId('importBtn').onclick=()=>toast('Demo sample photos · native import in Xcode app');byId('allBtn').onclick=()=>{selected=new Set(photos.map((_,i)=>i));renderGrid()};byId('copyBtn').onclick=()=>{clipboard=true;toast('Edit settings copied')};byId('resetBtn').onclick=()=>{currentLook='Original';sliders={};borderState={enabled:false,placement:'inside',color:'white',width:1.5};renderEditor()};byId('pasteBtn').onclick=()=>{if(!clipboard){toast('Copy edits in Editor first');return}if(!selected.size){toast('Select photos first');return}modal('Paste Settings',`<p class="hint">Apply selected groups to ${selected.size} photos</p>${['Film look & strength','Tone & color','Grain & effects','Lighting layers','Outline / Border'].map(x=>`<label class="line">${x}<input type="checkbox" checked></label>`).join('')}<button class="action" style="width:100%" id="doPaste">Apply to ${selected.size} photos</button>`);byId('doPaste').onclick=()=>{closeModal();toast(`Applied edit recipe to ${selected.size} photos · demo`)}};byId('selExport').onclick=()=>show('export');byId('closeModal').onclick=closeModal;byId('chooseLayout').onclick=layoutPicker;byId('prevPage').onclick=()=>{[pages[page-1],pages[page]]=[pages[page],pages[page-1]];page--;renderCollage()};byId('nextPage').onclick=()=>{[pages[page],pages[page+1]]=[pages[page+1],pages[page]];page++;renderCollage()};byId('removePage').onclick=()=>{const removed=pages.splice(page,1)[0];if(removed)selectedCollagePages.delete(removed.id);page=Math.min(page,pages.length-1);renderCollage()};byId('gapSlider').oninput=e=>{pages[page].gap=Number(e.target.value);renderCollage()};byId('collageRatio').onchange=e=>{collageRatio=e.target.value;renderCollage()};byId('proportionalSpacing').onchange=e=>{proportionalSpacing=e.target.checked;renderCollage()};byId('pageExport').onclick=openCollageExportMenu;byId('startExport').onclick=batch;
 const handle=byId('lightHandle');
 const img=byId('mainPhoto');
 img.addEventListener('load',()=>{fitPhoto();syncOverlay();renderLightPreview()});
