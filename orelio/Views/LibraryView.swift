@@ -31,9 +31,11 @@ struct LibraryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !store.photos.isEmpty {
-                        Button(store.selectionMode ? "Done" : "Select") {
+                        Button {
                             store.selectionMode.toggle()
                             if !store.selectionMode { store.clearSelection() }
+                        } label: {
+                            Label(store.selectionMode ? "Done" : "Select", systemImage: store.selectionMode ? "checkmark.circle.fill" : "checkmark.circle")
                         }
                     }
                 }
@@ -76,25 +78,31 @@ struct LibraryView: View {
             HStack {
                 Text("\(store.selectedIDs.count) selected").font(.subheadline.weight(.semibold))
                 Spacer()
-                Button("All") { store.selectAll() }
-                Button("Clear") { store.clearSelection() }
+                Button { store.selectAll() } label: { Label("All", systemImage: "checkmark.circle") }
+                    .buttonStyle(OrelioActionButtonStyle())
+                Button { store.clearSelection() } label: { Label("Clear", systemImage: "xmark.circle") }
+                    .buttonStyle(OrelioActionButtonStyle())
             }
             HStack(spacing: 12) {
                 Button { showPasteSheet = true } label: {
                     Label("Paste Edits", systemImage: "doc.on.clipboard")
+                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(OrelioActionButtonStyle(tone: .primary))
                 .disabled(store.copiedRecipe == nil || store.selectedIDs.isEmpty)
 
                 Button {
                     store.currentTab = .export
                 } label: { Label("Export", systemImage: "square.and.arrow.up") }
-                .buttonStyle(.bordered)
+                .buttonStyle(OrelioActionButtonStyle())
                 .disabled(store.selectedIDs.isEmpty)
 
                 Button(role: .destructive) { showDeleteConfirmation = true } label: {
                     Image(systemName: "trash")
-                }.buttonStyle(.bordered).disabled(store.selectedIDs.isEmpty)
+                        .frame(width: 25)
+                }.buttonStyle(OrelioActionButtonStyle(tone: .destructive))
+                    .accessibilityLabel("Delete selected photos")
+                    .disabled(store.selectedIDs.isEmpty)
             }
             .font(.caption)
             if store.canUndoPaste {
@@ -102,8 +110,10 @@ struct LibraryView: View {
                     Text("Applied to \(store.lastPasteCount) photo(s)")
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
-                    Button("Undo last paste") { store.undoLastPaste() }
-                        .font(.caption)
+                    Button { store.undoLastPaste() } label: {
+                        Label("Undo Paste", systemImage: "arrow.uturn.backward")
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
         }
@@ -126,10 +136,14 @@ struct LibraryView: View {
                         .foregroundStyle(.secondary)
                 }
                 Section {
-                    Button("Apply to \(store.selectedIDs.count) Photos") {
+                    Button {
                         store.pasteRecipe(to: store.selectedIDs, options: pasteOptions)
                         showPasteSheet = false
+                    } label: {
+                        Label("Apply to \(store.selectedIDs.count) Photos", systemImage: "checkmark.circle.fill")
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(OrelioActionButtonStyle(tone: .primary))
                     .disabled(!pasteOptions.hasAny || store.selectedIDs.isEmpty || store.copiedRecipe == nil)
                 }
             }
