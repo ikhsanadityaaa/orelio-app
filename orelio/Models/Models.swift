@@ -123,7 +123,7 @@ enum CompositionGrid: String, CaseIterable, Identifiable {
         switch self {
         case .off: "Off"
         case .thirds: "Rule of Thirds"
-        case .goldenSpiral: "Golden Ratio"
+        case .goldenSpiral: "Fibonacci Spiral"
         case .centerMarker: "Center Marker"
         case .goldenTriangles: "Golden Triangles"
         case .square: "Square Grid"
@@ -332,20 +332,70 @@ enum CollageLayout: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+enum CollageAspectRatio: String, Codable, CaseIterable, Identifiable {
+    case portrait = "4:5", square = "1:1", story = "9:16",
+         classic = "3:2", wide = "16:9"
+    var id: String { rawValue }
+    var ratio: CGFloat {
+        switch self {
+        case .portrait: 4.0 / 5.0
+        case .square: 1
+        case .story: 9.0 / 16.0
+        case .classic: 3.0 / 2.0
+        case .wide: 16.0 / 9.0
+        }
+    }
+}
+
 struct CollagePage: Codable, Equatable, Identifiable {
     var id: UUID = UUID()
     var layout: CollageLayout = .single
     var photoIDs: [UUID?] = [nil]
+    // Fraction of shortest side; all borders are consistent in physical pixel units.
     var margin: Double = 0.035
+    var ratio: CollageAspectRatio = .portrait
+    var proportionalSpacing: Bool = false
 
-    init(id: UUID = UUID(), layout: CollageLayout = .single, photoIDs: [UUID?] = []) {
+    init(id: UUID = UUID(), layout: CollageLayout = .single, photoIDs: [UUID?] = [],
+         margin: Double = 0.035, ratio: CollageAspectRatio = .portrait,
+         proportionalSpacing: Bool = false) {
         self.id = id
         self.layout = layout
         self.photoIDs = Array((photoIDs + Array(repeating: nil, count: layout.slotCount)).prefix(layout.slotCount))
+        self.margin = margin
+        self.ratio = ratio
+        self.proportionalSpacing = proportionalSpacing
+    }
+
+    // Older v0.3 collage projects do not have the new global page settings.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        layout = try c.decodeIfPresent(CollageLayout.self, forKey: .layout) ?? .single
+        let saved = try c.decodeIfPresent([UUID?].self, forKey: .photoIDs) ?? []
+        photoIDs = Array((saved + Array(repeating: nil, count: layout.slotCount)).prefix(layout.slotCount))
+        margin = try c.decodeIfPresent(Double.self, forKey: .margin) ?? 0.035
+        ratio = try c.decodeIfPresent(CollageAspectRatio.self, forKey: .ratio) ?? .portrait
+        proportionalSpacing = try c.decodeIfPresent(Bool.self, forKey: .proportionalSpacing) ?? false
     }
 
     mutating func changeLayout(_ value: CollageLayout) {
         layout = value
         photoIDs = Array((photoIDs + Array(repeating: nil, count: value.slotCount)).prefix(value.slotCount))
+    }
+
+    // Shared by native canvas and JPEG exporter: internal seams count HALF the
+    // inset from EACH image, exterior edges count one full inset.
+    func slotRect(_ index: Int, canvasSize: CGSize) -> CGRect {
+        let area = layout.rects[index]
+        let w = canvasSize.width, h = canvasSize.height
+        let gap = CGFloat(max(0, margin)) * min(w, h)
+        let left = gap * (proportionalSpacing && area.minX > 0.00001 ? 0.5 : 1)
+        let right = gap * (proportionalSpacing && area.maxX < 0.99999 ? 0.5 : 1)
+        let top = gap * (proportionalSpacing && area.minY > 0.00001 ? 0.5 : 1)
+        let bottom = gap * (proportionalSpacing && area.maxY < 0.99999 ? 0.5 : 1)
+        return CGRect(x: area.minX * w + left, y: area.minY * h + top,
+                      width: max(1, area.width * w - left - right),
+                      height: max(1, area.height * h - top - bottom))
     }
 }
