@@ -82,6 +82,7 @@ assert.equal(node('collageRatio').value,'9:16','new page inherits project ratio'
 assert.ok(node('canvas').innerHTML.includes('class="slot"'),'new page renders editable slots');
 
 // New per-page paper color, selection scope and ZIP container must behave in preview.
+runInContext("pages.splice(1);page=0;selectedCollagePages.clear()",sandbox);
 runInContext("pages[0].background='black';page=0",sandbox);
 api.renderCollage();
 assert.equal(node('canvas').style.background,'#000','active page paper can be black');
