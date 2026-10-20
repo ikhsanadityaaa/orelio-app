@@ -1,0 +1,34 @@
+name: Build unsigned iPhone IPA (free sideload)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unsigned-iphone-ipa:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout Orelio source
+        uses: actions/checkout@v4
+      - name: Xcode version
+        run: xcodebuild -version
+      - name: Verify Xcode source exists
+        run: test -f orelio.xcodeproj/project.pbxproj
+      - name: Build and package unsigned iPhone IPA
+        run: bash tools/build_unsigned_ipa_on_mac.sh
+      - name: Upload unsigned IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orelio-unsigned-iphone-ipa
+          path: dist/orelio-unsigned.ipa
+          retention-days: 7
+          if-no-files-found: error
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orelio-device-build-log
+          path: .build-iphone-unsigned/xcodebuild.log
+          retention-days: 7
+          if-no-files-found: ignore
