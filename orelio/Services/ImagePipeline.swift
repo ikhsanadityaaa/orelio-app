@@ -21,7 +21,7 @@ private extension FilmLook {
         case .forest: FilmGrade(contrast: 1.08, saturation: 0.92, warmth: -0.18, brightness: -0.018, mono: false)
         case .negSoft: FilmGrade(contrast: 0.89, saturation: 0.93, warmth: 0.04, brightness: 0.035, mono: false)
         case .negPortra: FilmGrade(contrast: 1.03, saturation: 0.83, warmth: 0.18, brightness: 0.015, mono: false)
-        case .negCool: FilmGrade(contrast: 0.98, saturation: 0.83, warmth: -0.30, brightness: 0, mono: false)
+        case .negCool: FilmGrade(contrast: 1.18, saturation: 0, warmth: 0, brightness: -0.015, mono: true) // Trix 400 monochrome look
         case .negMatte: FilmGrade(contrast: 0.85, saturation: 0.70, warmth: 0.08, brightness: 0.045, mono: false)
         case .chrome: FilmGrade(contrast: 0.96, saturation: 0.83, warmth: -0.16, brightness: 0.025, mono: false)
         case .slideVivid: FilmGrade(contrast: 1.21, saturation: 1.28, warmth: 0.06, brightness: -0.01, mono: false)
