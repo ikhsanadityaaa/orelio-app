@@ -95,6 +95,23 @@ button{cursor:pointer;transition:transform .13s ease,background-color .13s ease,
 .edit-controls .film-roll::after{content:"";position:absolute;z-index:1;left:calc(100% - 1px);top:8px;width:8px;height:17px;transform:rotate(7deg);border:1px solid #8d857d;border-radius:0 2px 2px 0;background:repeating-linear-gradient(to bottom,#252321 0px,#252321 2px,#d8cbb4 2px,#d8cbb4 4px,#252321 4px,#252321 6px)}
 .edit-controls .film-cap{height:5px;min-height:5px;border-radius:50% / 75%}
 .edit-controls .film-label{background:var(--film-color);border-radius:1px}
+
+/* Approved film editor: flat white navigation directly between photo and preset rail */
+section[data-view="edit"] .panels{background:#080808;border-top:1px solid #242424;border-bottom:1px solid #252525}
+section[data-view="edit"] .paneltab{color:#e5e5e5;border-radius:0;min-height:59px}
+section[data-view="edit"] .paneltab.on{background:transparent;color:#fff;box-shadow:inset 0 -2px #fff}
+.modeicon--film{width:24px;height:22px;display:inline-flex;justify-content:center;align-items:center}
+.modeicon--film svg{width:24px;height:24px;display:block}
+.edit-controls{background:#0a0a0a}
+.edit-controls .film-item{flex:0 0 96px;width:96px;min-width:96px;max-width:96px;padding:5px 4px 8px;gap:7px;border-radius:10px;overflow:visible}
+.edit-controls .film-item.on{background:transparent;border-color:transparent}
+.edit-controls .film-thumb{position:relative;display:block;flex:none;width:86px;height:107px;border-radius:10px;overflow:hidden;background:#282828;border:2px solid transparent;box-sizing:border-box}
+.edit-controls .film-item.on .film-thumb{border-color:#fff}
+.edit-controls .film-thumb img{width:100%;height:100%;display:block;margin:0;object-fit:cover;border:0;border-radius:0}
+.edit-controls .film-iso{position:absolute;z-index:3;top:6px;left:6px;padding:3px 7px;min-width:24px;box-sizing:border-box;border-radius:7px;font-size:13px;line-height:19px;font-weight:800;letter-spacing:-.35px;text-align:center;font-variant-numeric:tabular-nums;pointer-events:none}
+.edit-controls .film-name{font-size:11px;line-height:15px;font-weight:500;color:#f3f3f3;text-transform:none}
+.edit-controls .filmrail{padding:5px 9px 12px;gap:8px}
+.edit-controls .chips{padding-top:8px}
 </style></head><body><div class="wrap"><div class="subnote">Interactive iPhone UI prototype · v0.5</div><div class="device"><div class="notch"></div><div class="status"><span>9:41</span><span>▂▃▅ ◉ ▰</span></div><div class="app">
 <section class="screen on" data-view="library"><div class="top"><strong>Library</strong><div class="right"><span class="tiny">● OFFLINE</span><button class="iconbtn" id="multi">Select</button><button class="iconbtn" id="importBtn">＋</button></div></div><div class="inner"><div class="eyebrow">YOUR PHOTOGRAPHS</div><div class="hint">12 photos · Local collection</div></div><div class="scroll"><div class="photo-grid" id="grid"></div></div><div class="tray" id="selectionTray"><div class="tray-row"><span id="selectCount" class="muted">0 selected</span><button class="textbtn" id="allBtn"><span aria-hidden="true">◉</span> Select all</button></div><div class="tray-row"><button class="action action-with-icon" id="pasteBtn"><span class="btnicon" aria-hidden="true">⧉</span><span>Paste edits</span></button><button class="plain action-with-icon" id="selExport"><span class="btnicon" aria-hidden="true">⇧</span><span>Batch export</span></button></div></div></section>
 <section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon modeicon--film"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7.5" y="9" width="15" height="19" rx="3" fill="currentColor" fill-opacity=".10"/><path d="M7.5 13h15M7.5 24h15"/><rect x="11.2" y="5.5" width="7.6" height="3.5" rx="1" fill="currentColor" fill-opacity=".35"/><rect x="10.5" y="15.8" width="9" height="5.4" rx="1" fill="currentColor" fill-opacity=".20" stroke-width="1"/><path d="M22.5 11.5C27 10 28.2 13.2 28.2 16v11"/><path d="M25.4 16.5h2.8m-2.8 4h2.8m-2.8 4h2.8" stroke-width="1.3"/></svg></span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Composition</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
@@ -114,8 +131,9 @@ for(const [f,a] of Object.entries(families)){for(let i=0;i<8;i++){const n=['Soft
 
 /* Original orelio film stocks: short fictional roll names, not third-party trademarks.
    Keep image effect IDs independent of the visible stock labels. */
-const filmStockNames={"Negative":["sola 100","moss 200","linen 100","pearl 400","frost 200","char 800","sienna 160","fern 400","dune 200","ember 400","slate 100","haze 200","terra 400","dusk 800"],"Slide":["prism 100","glint 200","pastel 50","alpine 100","deep 64","cielo 100","iris 200","luma 50","aero 100","flint 200","glaze 64","aurora 100","vista 200"],"Instant":["milk 100","rose 200","peach 400","sepia 80","cream 200","dawn 100","mint 200","blush 100","frost 160","cotton 400","flora 200","plume 300","haze 400"],"Vintage":["fable 200","gold 100","teal 200","sunday 160","archive 80","clove 100","dust 320","amber 400","grain 200","retro 100","cinema 50","noct 400","faded 800"],"B&W":["silver 100","ash 200","noir 400","matte 100","mono 800","stone 50","grain 320","graph 400","smoke 200","night 800","fog 100","ink 400","slate 640"]};
-const filmStockColors={"Negative":["#e6b33a","#4e946a","#dbc8a5","#b38676","#6890a3","#55565b","#c26d4a","#4f9660","#d1a769","#ba683b","#6c8c9e","#a7a6a0","#bf775b","#535a75"],"Slide":["#5076a5","#db884f","#ebc1ae","#548b94","#6d5169","#85b3c9","#726aab","#e5c45b","#6ca4ae","#9a8270","#d79785","#6a8fa2","#629477"],"Instant":["#e8d6c0","#d690a8","#f2a07b","#a07f64","#e7c894","#dba961","#81b59d","#dfa9b0","#afced0","#d2c9b7","#98ae7e","#a99fc4","#8c9bb0"],"Vintage":["#c1a16e","#d7b14b","#57979b","#be795b","#797369","#9b6949","#a69583","#d5ad51","#857765","#bf8f61","#b66b5e","#565b72","#baa293"],"B&W":["#d3d0c7","#a9adac","#595b60","#aea6a0","#777880","#dddcd6","#919390","#6b737b","#acb7ba","#484c55","#c9cecd","#73737a","#7c8590"]};
+// Film-stock-inspired presentation labels. Internal edit/preview keys remain stable.
+const filmStockNames={"Negative":["Gold 200","Fujia 200","Porta 400","Provia 100","Trix 400","Gold 800","Superia 160","Fujia 400","Ektra 200","Porta 800","Procolor 100","Fujia 100","Colorplus 400","Vision 800"],"Slide":["Ektra 100","Velvia 100","Astia 50","Provia 200","Kodach 64","Agfa 100","Velvia 200","Ektra 50","Chrome 100","Reala 200","Privia 64","Velvia 400","Agfa 200"],"Instant":["Insta 600","Insta 100","Polax 400","SX 70","Insta 200","OneStep 100","Instax 200","Polax 100","Insta 160","Wide 400","Polax 200","SX 300","Insta 400"],"Vintage":["Gold 400","Kodach 200","Fujia 400","Color 160","Panchro 400","Gold 100","Vision 320","Kodach 400","Color 200","Gold 1000","Vision 50","Panchro 100","Color 800"],"B&W":["Trix 320","Delta 100","HP5 400","PanF 50","Tmax 800","Delta 50","HP5 320","Tmax 400","Trix 200","Delta 800","Acros 100","Trix 400","Tmax 640"]};
+const filmStockColors={"Negative":["#F5CD39","#388E3C","#D54D2D","#426892","#505357","#F2BE34","#439347","#317F42","#D8AB46","#CB6244","#D4B943","#5E9B67","#D8A64C","#5D5166"],"Slide":["#416793","#D1432F","#6A8F64","#365E89","#C59D3A","#487862","#B83B30","#B99D52","#5385AC","#489483","#527498","#A34F48","#487C67"],"Instant":["#DDBD8C","#E1D5BD","#CC6C78","#A17557","#CCA565","#C68C48","#459C80","#D7A3A5","#D8C9B3","#9E9F91","#83A176","#A29CC4","#7D8A9E"],"Vintage":["#F1C23E","#D3A237","#3E9350","#C47853","#7D7870","#E1B73F","#A38C73","#C4983E","#B98F65","#CA913C","#B4665A","#625D77","#C4A082"],"B&W":["#4A4C50","#919698","#515358","#ABB0B2","#42464C","#BCC0BD","#5F6267","#686C75","#94999A","#373A40","#B5B8BB","#4D5056","#79808A"]};
 const filmRailPositions=Object.create(null);
 allLooks=['Original',...Object.values(families).flat()];
 function stockLabel(key,group){
@@ -123,14 +141,20 @@ function stockLabel(key,group){
  const idx=(families[group]||[]).indexOf(key);
  return filmStockNames[group]?.[idx] || String(key).toLowerCase();
 }
-function stockRoll(key,group){
- if(key==='Original')return '<span class="film-roll film-roll-empty"><span class="film-cap"></span><span class="film-label"><i>orelio</i><b>—</b></span><span class="film-cap film-cap-bottom"></span></span>';
+function stockBadge(key,group){
+ if(key==='Original')return '';
  const idx=(families[group]||[]).indexOf(key);
  const label=stockLabel(key,group);
- const iso=label.split(' ').at(-1);
- const color=filmStockColors[group]?.[idx]||'#d8ad7a';
- return '<span class="film-roll" style="--film-color:'+color+'"><span class="film-cap"></span><span class="film-label"><i>orelio</i><b>'+iso+'</b></span><span class="film-cap film-cap-bottom"></span></span>';
+ const match=label.match(/(\d{2,4})$/);
+ if(!match)return '';
+ const color=filmStockColors[group]?.[idx]||'#D5A54F';
+ const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
+ const luminance=(rgb[0]*299+rgb[1]*587+rgb[2]*114)/1000;
+ return '<span class="film-iso" aria-hidden="true" style="background:'+color+';color:'+(luminance>150?'#151515':'#fff')+'">'+match[1]+'</span>';
 }
+// The Trix 400 look must produce a monochrome result, not only a monochrome badge.
+filters[families.Negative[4]]='grayscale(1) contrast(1.12)';
+
 const groups={'LIGHT & TONE':[['Exposure',0,-100,100],['Contrast',0,-100,100],['Clarity',0,0,100],['Shadows',0,-100,100],['Highlights',0,-100,100],['Glow',0,0,100],['Halation',0,0,100]],'COLOR':[['Saturation',0,-100,100],['Warmth',0,-100,100],['Pre Warmth',0,-100,100],['Post Warmth',0,-100,100],['Pre Tint',0,-100,100],['Post Tint',0,-100,100]],'DETAIL & ANALOG':[['Sharpen',0,0,100],['Film Grain',0,0,100],['Grain Size',50,0,100],['Vignette',0,0,100],['Fade',0,0,100],['Vintage Lens',0,0,100],['Dust',0,0,100]]};
 const layouts={'Full Bleed':[[0,0,1,1]],'Split V':[[0,0,.5,1],[.5,0,.5,1]],'Split H':[[0,0,1,.5],[0,.5,1,.5]],Triptych:[[0,0,1,.6],[0,.6,.5,.4],[.5,.6,.5,.4]],Editorial:[[0,0,.67,1],[.67,0,.33,.5],[.67,.5,.33,.5]],Mosaic:[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]};
 function toast(msg){let x=byId('toast');x.textContent=msg;x.classList.add('on');clearTimeout(window.to);window.to=setTimeout(()=>x.classList.remove('on'),2200)}
@@ -216,8 +240,10 @@ function renderControls(){
   node.innerHTML=`<div class="chips">${Object.keys(families).map(c=>`<button data-cat="${c}" class="${category===c?'on':''}">${c.toUpperCase()}</button>`).join('')}</div>
    <div class="filmrail" data-category="${category}" aria-label="Film stock presets">
     ${stocks.map(f=>`<button type="button" class="film-item ${currentLook===f?'on':''}" data-look="${f}" title="${stockLabel(f,category)}" aria-pressed="${currentLook===f}">
-      ${stockRoll(f,category)}
-      <img src="${photos[currentPhoto]}" loading="lazy" alt="" draggable="false" style="filter:${filters[f]||'none'}">
+      <span class="film-thumb">
+        <img src="${photos[currentPhoto]}" loading="lazy" alt="" draggable="false" style="filter:${filters[f]||'none'}">
+        ${stockBadge(f,category)}
+      </span>
       <span class="film-name">${stockLabel(f,category)}</span>
     </button>`).join('')}
    </div>${slider('Film Strength',100,0,100)}`;
