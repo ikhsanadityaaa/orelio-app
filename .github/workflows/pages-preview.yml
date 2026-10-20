@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - index.html
+      - MOBILE_PREVIEW_v0.5.html
+      - tools/preview-smoke.mjs
       - .github/workflows/pages-preview.yml
   workflow_dispatch:
 permissions:
