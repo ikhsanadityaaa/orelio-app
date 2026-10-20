@@ -93,14 +93,14 @@ check(page.photoIDs.count == 4, "new layout slots")
 
 // Collage page controls must use exactly the same geometry in previews and exported JPEGs.
 let legacyPageJSON = """
-{"layout":"splitV","photoIDs":[null,null],"margin":0.035}
+{"layout":"splitVertical","photoIDs":[null,null],"margin":0.035}
 """
 // Check our new Codable defaults on an old page saved before ratios existed.
 if let oldPage = try? JSONDecoder().decode(CollagePage.self, from: Data(legacyPageJSON.utf8)) {
     check(oldPage.ratio == .portrait && !oldPage.proportionalSpacing,
           "old collage pages recover ratio and proportional defaults")
 }
-var proportional = CollagePage(layout: .splitV, margin: 0.05,
+var proportional = CollagePage(layout: .splitVertical, margin: 0.05,
                                 ratio: .square, proportionalSpacing: true)
 let canvasSize = CGSize(width: 1000, height: 1000)
 let leftCell = proportional.slotRect(0, canvasSize: canvasSize)
@@ -119,8 +119,8 @@ for ratio in CollageAspectRatio.allCases {
           "each ratio produces a valid export frame")
 }
 let pageJSON = try JSONEncoder().encode(proportional)
-check(try JSONDecoder().decode(CollagePage.self, from: pageJSON) == proportional,
-      "new collage settings round-trip and preserve IDs")
+let copiedPage = try JSONDecoder().decode(CollagePage.self, from: pageJSON)
+check(copiedPage == proportional, "new collage settings round-trip and preserve IDs")
 print("PASS: global aspect ratios, proportional seams and legacy collage decode")
 
 print("PASS: film catalog, adjustment roundtrip, page layouts")
