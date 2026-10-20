@@ -47,7 +47,10 @@ struct BatchExportView: View {
                             Text("Current: \(exporter.currentFilename)")
                                 .font(.caption).lineLimit(1)
                         }
-                        Button("Stop after current photo", role: .destructive) { exporter.cancel() }
+                        Button(role: .destructive) { exporter.cancel() } label: {
+                            Label("Stop after current photo", systemImage: "stop.circle")
+                        }
+                        .buttonStyle(OrelioActionButtonStyle(tone: .destructive))
                             .disabled(exporter.wasCancelled)
                     } else {
                         if exporter.wasCancelled {
@@ -61,13 +64,16 @@ struct BatchExportView: View {
                             Label("Export \(candidates.count) Photos", systemImage: "square.and.arrow.up")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(OrelioActionButtonStyle(tone: .primary))
                         .disabled(candidates.isEmpty)
                     }
                     if !exporter.completedFiles.isEmpty {
                         Label("\(exporter.completedFiles.count) image(s) exported", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Button("Share / Save Exported Files") { showShare = true }
+                        Button { showShare = true } label: {
+                            Label("Share / Save Exported Files", systemImage: "square.and.arrow.up")
+                        }
+                        .buttonStyle(OrelioActionButtonStyle())
                     }
                     if !exporter.failures.isEmpty {
                         Text("\(exporter.failures.count) failures").foregroundStyle(.orange)
@@ -77,8 +83,10 @@ struct BatchExportView: View {
                                 Text(failure.message).font(.caption2).foregroundStyle(.secondary)
                             }
                         }
-                        Button("Retry Failed Photos") { exporter.retryFailed() }
-                            .disabled(exporter.isExporting)
+                        Button { exporter.retryFailed() } label: {
+                            Label("Retry Failed Photos", systemImage: "arrow.clockwise.circle")
+                        }
+                        .buttonStyle(OrelioActionButtonStyle())(exporter.isExporting)
                     }
                     if let folder = exporter.exportFolder {
                         Text("Saved locally: \(folder.lastPathComponent)")
