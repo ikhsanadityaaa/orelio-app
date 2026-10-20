@@ -1,6 +1,33 @@
 import SwiftUI
 import UIKit
 
+/// One consistent visual language for major actions across Library, Export and Collage.
+struct OrelioActionButtonStyle: ButtonStyle {
+    enum Tone { case primary, secondary, destructive }
+    var tone: Tone = .secondary
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .foregroundStyle(tone == .primary ? Color(red: 0.18, green: 0.12, blue: 0.10) :
+                             tone == .destructive ? Color.red : Color.primary)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 42)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(tone == .primary ? Color(red: 0.83, green: 0.60, blue: 0.46) :
+                          Color(.secondarySystemGroupedBackground))
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(tone == .primary ? 0 : 0.10), lineWidth: 1)
+            }
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.82 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 struct EmptyPrompt: View {
     let symbol: String
     let title: String
