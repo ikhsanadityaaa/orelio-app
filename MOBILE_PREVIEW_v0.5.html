@@ -146,24 +146,33 @@ for(const [f,a] of Object.entries(families)){for(let i=0;i<8;i++){const n=['Soft
 const filmStockNames={"Negative":["Gold 200","Fujia 200","Porta 400","Provia 100","Trix 400","Gold 800","Superia 160","Fujia 400","Ektra 200","Porta 800","Procolor 100","Fujia 100","Colorplus 400","Vision 800"],"Slide":["Ektra 100","Velvia 100","Astia 50","Provia 200","Kodach 64","Agfa 100","Velvia 200","Ektra 50","Chrome 100","Reala 200","Privia 64","Velvia 400","Agfa 200"],"Instant":["Insta 600","Insta 100","Polax 400","SX 70","Insta 200","OneStep 100","Instax 200","Polax 100","Insta 160","Wide 400","Polax 200","SX 300","Insta 400"],"Vintage":["Gold 400","Kodach 200","Fujia 400","Color 160","Panchro 400","Gold 100","Vision 320","Kodach 400","Color 200","Gold 1000","Vision 50","Panchro 100","Color 800"],"B&W":["Trix 320","Delta 100","HP5 400","PanF 50","Tmax 800","Delta 50","HP5 320","Tmax 400","Trix 200","Delta 800","Acros 100","Trix 400","Tmax 640"]};
 // Only four tabs. Preserve internal look keys and all film effects while reclassifying.
 // Every monochrome stock belongs to B&W, even if previously in Negative or Vintage.
-const reclassifiedFamilies={Negative:[],Slide:[],Instant:[],'B&W':[]};
-const reclassifiedNames={Negative:[],Slide:[],Instant:[],'B&W':[]};
+// Three visible tabs. Preserve legacy look IDs and pair keys with their display
+// labels while alphabetizing left-to-right within each category.
+const reclassifiedFamilies={Negative:[],Instant:[],'B&W':[]};
+const reclassifiedNames={Negative:[],Instant:[],'B&W':[]};
 const bAndWStock=/^(trix|tmax|delta|hp5|panf|panchro|acros)\b/i;
 for(const [oldGroup,keys] of Object.entries(families)){
  keys.forEach((key,i)=>{
   const label=filmStockNames[oldGroup]?.[i];
   if(!label)throw new Error('Missing film name '+oldGroup+' index '+i);
   const nextGroup=bAndWStock.test(label)||oldGroup==='B&W'
-    ? 'B&W' : oldGroup==='Vintage' ? 'Negative' : oldGroup;
+    ? 'B&W' : oldGroup==='Vintage'||oldGroup==='Slide' ? 'Negative' : oldGroup;
   reclassifiedFamilies[nextGroup].push(key);
   reclassifiedNames[nextGroup].push(label);
  });
 }
 delete families.Vintage;
+delete families.Slide;
 delete filmStockNames.Vintage;
-for(const name of ['Negative','Slide','Instant','B&W']){
- families[name]=reclassifiedFamilies[name];
- filmStockNames[name]=reclassifiedNames[name];
+delete filmStockNames.Slide;
+const filmAlphaCollator=new Intl.Collator('en',{numeric:true,sensitivity:'base'});
+for(const name of ['Negative','Instant','B&W']){
+ const paired=reclassifiedFamilies[name].map((key,i)=>({
+  key,label:reclassifiedNames[name][i],originalIndex:i
+ }));
+ paired.sort((a,b)=>filmAlphaCollator.compare(a.label,b.label)||a.originalIndex-b.originalIndex);
+ families[name]=paired.map(item=>item.key);
+ filmStockNames[name]=paired.map(item=>item.label);
 }
 for(const key of families['B&W']){
  const base=filters[key]||'none';
