@@ -9,6 +9,7 @@ struct CollageView: View {
     @State private var slotIndex = 0
     @State private var showLayouts = false
     @State private var showPhotos = false
+    @State private var addPhotoAsNewPage = false
     @State private var isWorking = false
     @State private var output: [URL] = []
     @State private var showShare = false
@@ -46,16 +47,14 @@ struct CollageView: View {
                             }
                             Button {
                                 guard pages.count < 20 else { return }
-                                pages.append(CollagePage(layout: .single))
-                                pageIndex = pages.count - 1
-                                output = []
+                                addContinuationPage()
                             } label: {
                                 VStack(spacing: 5) {
                                     RoundedRectangle(cornerRadius: 7)
                                         .strokeBorder(style: StrokeStyle(lineWidth: 1.4, dash: [5, 4]))
                                         .frame(width: 60, height: 78)
                                         .overlay(Image(systemName: "plus"))
-                                    Text("Add Page").font(.caption2)
+                                    Text("New Page").font(.caption2)
                                 }.padding(4)
                             }.buttonStyle(.plain).disabled(pages.count >= 20)
                         }
@@ -66,6 +65,28 @@ struct CollageView: View {
                         Button { showLayouts = true } label: { Label("Choose Layout", systemImage: "square.grid.2x2") }
                             .buttonStyle(.bordered)
                     }
+                    HStack(spacing: 10) {
+                        Picker("Page Ratio", selection: Binding(
+                            get: { currentPage.ratio },
+                            set: { value in
+                                for index in pages.indices { pages[index].ratio = value }
+                                output = []
+                            })) {
+                            ForEach(CollageAspectRatio.allCases) { ratio in
+                                Text(ratio.rawValue).tag(ratio)
+                            }
+                        }.pickerStyle(.menu)
+                        Spacer()
+                        Toggle("Proportional", isOn: Binding(
+                            get: { currentPage.proportionalSpacing },
+                            set: { value in
+                                for index in pages.indices { pages[index].proportionalSpacing = value }
+                                output = []
+                            }))
+                            .font(.caption)
+                    }
+                    Text("Proportional makes every outer margin and shared image seam equally thick.")
+                        .font(.caption2).foregroundStyle(.secondary)
                     pageCanvas
                     HStack {
                         Text(currentPage.layout.title).font(.subheadline.weight(.medium))
@@ -79,11 +100,11 @@ struct CollageView: View {
                     }.font(.caption)
                     HStack {
                         Text("Spacing").font(.caption)
-                        Slider(value: Binding(get: { currentPage.margin }, set: { pages[pageIndex].margin = $0 }), in: 0...0.075)
+                        Slider(value: Binding(get: { currentPage.margin }, set: { pages[pageIndex].margin = $0; output = [] }), in: 0...0.075)
                         Button(role: .destructive) { removePage() } label: { Image(systemName: "trash") }
                             .disabled(pages.count < 2)
                     }
-                    Text("Tap a frame to choose a photo from Library. Layouts and page order can be changed anytime.")
+                    Text("Tap a frame to choose a photo, or Add as New Page to create the next continuation. Ratio changes apply to all pages.")
                         .font(.caption).foregroundStyle(.secondary)
                     if isWorking { ProgressView("Rendering pages offline…") }
                     if let errorText { Text(errorText).font(.caption).foregroundStyle(.orange) }
@@ -116,11 +137,12 @@ struct CollageView: View {
             ZStack(alignment: .topLeading) {
                 Color(red: 0.95, green: 0.93, blue: 0.89)
                 ForEach(0..<currentPage.layout.slotCount, id: \.self) { i in
-                    let rect = currentPage.layout.rects[i].insetBy(dx: currentPage.margin, dy: currentPage.margin)
-                    let width = max(1, bounds.width * rect.width)
-                    let height = max(1, bounds.height * rect.height)
+                    let rect = currentPage.slotRect(i, canvasSize: bounds)
+                    let width = max(1, rect.width)
+                    let height = max(1, rect.height)
                     Button {
                         slotIndex = i
+                        addPhotoAsNewPage = false
                         showPhotos = true
                     } label: {
                         ZStack {
@@ -142,11 +164,11 @@ struct CollageView: View {
                     }
                     .buttonStyle(.plain)
                     .frame(width: width, height: height)
-                    .position(x: bounds.width * rect.midX, y: bounds.height * rect.midY)
+                    .position(x: rect.midX, y: rect.midY)
                 }
             }
         }
-        .aspectRatio(4.0 / 5.0, contentMode: .fit)
+        .aspectRatio(currentPage.ratio.ratio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
@@ -186,7 +208,14 @@ struct CollageView: View {
     private var photoSheet: some View {
         NavigationStack {
             List {
-                if !currentPage.photoIDs.isEmpty, currentPage.photoIDs.indices.contains(slotIndex), currentPage.photoIDs[slotIndex] != nil {
+                Toggle(isOn: $addPhotoAsNewPage) {
+                    Label("Add as New Page", systemImage: "plus.square.on.square")
+                }
+                Text(addPhotoAsNewPage ? "This photo starts the next page, immediately after the current one." :
+                     "Replace the selected frame.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !addPhotoAsNewPage && !currentPage.photoIDs.isEmpty,
+                   currentPage.photoIDs.indices.contains(slotIndex), currentPage.photoIDs[slotIndex] != nil {
                     Button("Clear Frame", role: .destructive) {
                         pages[pageIndex].photoIDs[slotIndex] = nil
                         showPhotos = false
@@ -194,7 +223,11 @@ struct CollageView: View {
                 }
                 ForEach(store.photos) { photo in
                     Button {
-                        pages[pageIndex].photoIDs[slotIndex] = photo.id
+                        if addPhotoAsNewPage {
+                            addContinuationPage(photoID: photo.id)
+                        } else {
+                            pages[pageIndex].photoIDs[slotIndex] = photo.id
+                        }
                         showPhotos = false
                         output = []
                     } label: {
@@ -212,6 +245,21 @@ struct CollageView: View {
             .navigationTitle("Choose Photo")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { showPhotos = false } } }
         }
+    }
+
+    // Sequential insert, rather than appending at the end, so the new page
+    // immediately continues the page being edited.
+    private func addContinuationPage(photoID: UUID? = nil) {
+        guard pages.count < 20 else { return }
+        let prior = currentPage
+        let created = CollagePage(
+            layout: photoID == nil ? prior.layout : .single,
+            photoIDs: photoID.map { [$0] } ?? [],
+            margin: prior.margin, ratio: prior.ratio,
+            proportionalSpacing: prior.proportionalSpacing)
+        pages.insert(created, at: pageIndex + 1)
+        pageIndex += 1
+        output = []
     }
 
     private func shiftPage(_ delta: Int) {
