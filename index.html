@@ -50,6 +50,40 @@ section[data-view="edit"] .modeicon{font-size:18px}
 .rotate-actions{display:flex;gap:7px;padding:4px 16px}
 .rotate-actions button{border:1px solid #504136;border-radius:8px;background:#302722;color:#fff;padding:8px 12px;font-size:11px}
 .rotate-actions span{align-self:center;margin-left:auto;color:#c8a48d;font-size:11px}
+
+/* Film-stock rail: stable horizontal scroll and compact, unwrapped labels. */
+.edit-controls .filmrail{
+  display:flex;gap:9px;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  overscroll-behavior-x:contain;padding:2px 14px 9px;
+}
+.edit-controls .film-item{
+  flex:0 0 92px;width:92px;min-width:92px;min-height:0;max-width:92px;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:5px 5px 7px;border:1px solid transparent;border-radius:9px;
+  overflow:hidden;text-align:center;
+}
+.edit-controls .film-item.on{background:#382a24;border-color:#c99872}
+.edit-controls .film-item img{display:block;width:80px;height:63px;max-width:100%;border-radius:5px;object-fit:cover;margin:0}
+.edit-controls .film-name{
+  display:block;width:100%;max-width:100%;font-size:10px;line-height:14px;
+  font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  letter-spacing:-.08px;text-transform:lowercase;
+}
+.film-roll{
+  --film-color:#d7a46c;display:flex;position:relative;flex-direction:column;
+  width:35px;height:33px;min-height:33px;overflow:hidden;border-radius:5px 5px 4px 4px;
+  background:var(--film-color);box-shadow:2px 2px 0 #0505048a,inset -5px 0 5px #0002;
+}
+.film-cap{display:block;height:5px;min-height:5px;background:linear-gradient(90deg,#252321,#55514b 32%,#181716 90%);border-radius:3px}
+.film-cap-bottom{margin-top:auto}
+.film-label{
+  display:flex;flex:1;min-height:0;align-items:center;justify-content:space-around;
+  padding:0 2px;color:#171612;font-size:8px;font-weight:800;
+}
+.film-label i{font-size:6px;font-style:normal;letter-spacing:-.35px;writing-mode:vertical-rl;transform:rotate(180deg)}
+.film-label b{font-size:12px;letter-spacing:-.5px;line-height:1}
+.film-roll-empty{--film-color:#bbb5a9}
 </style></head><body><div class="wrap"><div class="subnote">Interactive iPhone UI prototype · v0.5</div><div class="device"><div class="notch"></div><div class="status"><span>9:41</span><span>▂▃▅ ◉ ▰</span></div><div class="app">
 <section class="screen on" data-view="library"><div class="top"><strong>Library</strong><div class="right"><span class="tiny">● OFFLINE</span><button class="iconbtn" id="multi">Select</button><button class="iconbtn" id="importBtn">＋</button></div></div><div class="inner"><div class="eyebrow">YOUR PHOTOGRAPHS</div><div class="hint">12 photos · Local collection</div></div><div class="scroll"><div class="photo-grid" id="grid"></div></div><div class="tray" id="selectionTray"><div class="tray-row"><span id="selectCount" class="muted">0 selected</span><button class="textbtn" id="allBtn">Select all</button></div><div class="tray-row"><button class="action" id="pasteBtn">Paste edits</button><button class="plain" id="selExport">Batch export ↗</button></div></div></section>
 <section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon">▣</span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Grid</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
@@ -63,9 +97,29 @@ const byId=id=>document.getElementById(id);
 let currentView='library',selecting=false,selected=new Set(),currentPhoto=0,clipboard=false,panel='film',category='Negative',currentLook='Amber 200';
 let activeTool='Exposure', activeLight=0, sliders={},lightLayers=['Golden Glow'],pages=[{layout:'Editorial',photos:[0,1,2],gap:3}],page=0,slot=0,expTimer=null;
 const families={Negative:['Amber 200','Forest 200','Soft 100','Portrait 400','Nordic 200','Matte 800'],Slide:['Soft Chrome','Vivid 100','Pastel 50','Alpine 100','Deep 64'],Instant:['Instant Warm','Instant Milk','Instant Rose','Instant Sepia','Instant Fade'],Vintage:['Faded 400','Golden 1977','Teal 1980','Sunday 1968','Archive 79'],'B&W':['Silver Mono','Silver 100','Noir 400','Matte Grey','Silver 800']};
-const allLooks=['Original',...Object.values(families).flat()];
+let allLooks=['Original',...Object.values(families).flat()];
 const filters={'Original':'none','Amber 200':'sepia(.19) saturate(.83) contrast(1.09)','Forest 200':'hue-rotate(-13deg) saturate(.8) contrast(1.08)','Soft 100':'saturate(.86) contrast(.91) brightness(1.04)','Portrait 400':'sepia(.12) saturate(.81) contrast(1.04)','Nordic 200':'hue-rotate(14deg) saturate(.77)','Matte 800':'saturate(.7) contrast(.81) brightness(1.07)','Soft Chrome':'hue-rotate(9deg) saturate(.82) contrast(.98)','Vivid 100':'saturate(1.29) contrast(1.16)','Pastel 50':'saturate(.8) contrast(.88) brightness(1.06)','Alpine 100':'hue-rotate(17deg) saturate(1.02) contrast(1.12)','Deep 64':'contrast(1.29) saturate(.91)','Instant Warm':'sepia(.25) contrast(.87) brightness(1.06)','Instant Milk':'saturate(.71) contrast(.76) brightness(1.1)','Instant Rose':'sepia(.16) hue-rotate(-9deg) saturate(.85)','Instant Sepia':'sepia(.42) saturate(.7)','Instant Fade':'contrast(.76) saturate(.58) brightness(1.09)','Faded 400':'sepia(.2) contrast(.82) brightness(1.1)','Golden 1977':'sepia(.27) saturate(.81)','Teal 1980':'hue-rotate(19deg) saturate(.8)','Sunday 1968':'sepia(.19) saturate(.6) contrast(.83)','Archive 79':'sepia(.24) contrast(1.1) saturate(.83)','Silver Mono':'grayscale(1) contrast(1.23)','Silver 100':'grayscale(1) contrast(.9) brightness(1.03)','Noir 400':'grayscale(1) contrast(1.4)','Matte Grey':'grayscale(1) contrast(.8) brightness(1.06)','Silver 800':'grayscale(1) contrast(1.19)'};
 for(const [f,a] of Object.entries(families)){for(let i=0;i<8;i++){const n=['Soft','Warm','Faded','Deep','Muted','Bright','Classic','Matte'][i]+' '+f+' '+(i+1);a.push(n);filters[n]=(f==='B&W'?'grayscale(1) ':'')+'contrast('+(.82+(i%4)*.1)+') saturate('+(f==='B&W'?0:.72+(i%5)*.13)+') brightness('+(1+(i%3)*.03)+') sepia('+(f==='B&W'?0:(i%3)*.06)+')';}}
+
+/* Original orelio film stocks: short fictional roll names, not third-party trademarks.
+   Keep image effect IDs independent of the visible stock labels. */
+const filmStockNames={"Negative":["sola 100","moss 200","linen 100","pearl 400","frost 200","char 800","sienna 160","fern 400","dune 200","ember 400","slate 100","haze 200","terra 400","dusk 800"],"Slide":["prism 100","glint 200","pastel 50","alpine 100","deep 64","cielo 100","iris 200","luma 50","aero 100","flint 200","glaze 64","aurora 100","vista 200"],"Instant":["milk 100","rose 200","peach 400","sepia 80","cream 200","dawn 100","mint 200","blush 100","frost 160","cotton 400","flora 200","plume 300","haze 400"],"Vintage":["fable 200","gold 100","teal 200","sunday 160","archive 80","clove 100","dust 320","amber 400","grain 200","retro 100","cinema 50","noct 400","faded 800"],"B&W":["silver 100","ash 200","noir 400","matte 100","mono 800","stone 50","grain 320","graph 400","smoke 200","night 800","fog 100","ink 400","slate 640"]};
+const filmStockColors={"Negative":["#e6b33a","#4e946a","#dbc8a5","#b38676","#6890a3","#55565b","#c26d4a","#4f9660","#d1a769","#ba683b","#6c8c9e","#a7a6a0","#bf775b","#535a75"],"Slide":["#5076a5","#db884f","#ebc1ae","#548b94","#6d5169","#85b3c9","#726aab","#e5c45b","#6ca4ae","#9a8270","#d79785","#6a8fa2","#629477"],"Instant":["#e8d6c0","#d690a8","#f2a07b","#a07f64","#e7c894","#dba961","#81b59d","#dfa9b0","#afced0","#d2c9b7","#98ae7e","#a99fc4","#8c9bb0"],"Vintage":["#c1a16e","#d7b14b","#57979b","#be795b","#797369","#9b6949","#a69583","#d5ad51","#857765","#bf8f61","#b66b5e","#565b72","#baa293"],"B&W":["#d3d0c7","#a9adac","#595b60","#aea6a0","#777880","#dddcd6","#919390","#6b737b","#acb7ba","#484c55","#c9cecd","#73737a","#7c8590"]};
+const filmRailPositions=Object.create(null);
+allLooks=['Original',...Object.values(families).flat()];
+function stockLabel(key,group){
+ if(key==='Original')return 'original';
+ const idx=(families[group]||[]).indexOf(key);
+ return filmStockNames[group]?.[idx] || String(key).toLowerCase();
+}
+function stockRoll(key,group){
+ if(key==='Original')return '<span class="film-roll film-roll-empty"><span class="film-cap"></span><span class="film-label"><i>orelio</i><b>—</b></span><span class="film-cap film-cap-bottom"></span></span>';
+ const idx=(families[group]||[]).indexOf(key);
+ const label=stockLabel(key,group);
+ const iso=label.split(' ').at(-1);
+ const color=filmStockColors[group]?.[idx]||'#d8ad7a';
+ return '<span class="film-roll" style="--film-color:'+color+'"><span class="film-cap"></span><span class="film-label"><i>orelio</i><b>'+iso+'</b></span><span class="film-cap film-cap-bottom"></span></span>';
+}
 const groups={'LIGHT & TONE':[['Exposure',0,-100,100],['Contrast',0,-100,100],['Clarity',0,0,100],['Shadows',0,-100,100],['Highlights',0,-100,100],['Glow',0,0,100],['Halation',0,0,100]],'COLOR':[['Saturation',0,-100,100],['Warmth',0,-100,100],['Pre Warmth',0,-100,100],['Post Warmth',0,-100,100],['Pre Tint',0,-100,100],['Post Tint',0,-100,100]],'DETAIL & ANALOG':[['Sharpen',0,0,100],['Film Grain',0,0,100],['Grain Size',50,0,100],['Vignette',0,0,100],['Fade',0,0,100],['Vintage Lens',0,0,100],['Dust',0,0,100]]};
 const layouts={'Full Bleed':[[0,0,1,1]],'Split V':[[0,0,.5,1],[.5,0,.5,1]],'Split H':[[0,0,1,.5],[0,.5,1,.5]],Triptych:[[0,0,1,.6],[0,.6,.5,.4],[.5,.6,.5,.4]],Editorial:[[0,0,.67,1],[.67,0,.33,.5],[.67,.5,.33,.5]],Mosaic:[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]};
 function toast(msg){let x=byId('toast');x.textContent=msg;x.classList.add('on');clearTimeout(window.to);window.to=setTimeout(()=>x.classList.remove('on'),2200)}
@@ -142,10 +196,40 @@ function syncOverlay(){
 
 function renderControls(){
  const node=byId('controlArea');
+
  if(panel==='film'){
-  node.innerHTML=`<div class="chips">${Object.keys(families).map(c=>`<button data-cat="${c}" class="${category===c?'on':''}">${c.toUpperCase()}</button>`).join('')}</div><div class="filmrail">${['Original',...families[category]].map(f=>`<button class="film-item ${currentLook===f?'on':''}" data-look="${f}"><img src="${photos[currentPhoto]}" style="filter:${filters[f]||'none'}"><span>${f}</span></button>`).join('')}</div>${slider('Film Strength',100,0,100)}`;
-  node.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{category=b.dataset.cat;renderControls()});
-  node.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{currentLook=b.dataset.look;renderEditor()});
+  // Record the outgoing rail before HTML replacement, including category changes.
+  const previousRail=node.querySelector('.filmrail');
+  if(previousRail)filmRailPositions[previousRail.dataset.category]=previousRail.scrollLeft;
+  const stocks=['Original',...families[category]];
+  node.innerHTML=`<div class="chips">${Object.keys(families).map(c=>`<button data-cat="${c}" class="${category===c?'on':''}">${c.toUpperCase()}</button>`).join('')}</div>
+   <div class="filmrail" data-category="${category}" aria-label="Film stock presets">
+    ${stocks.map(f=>`<button type="button" class="film-item ${currentLook===f?'on':''}" data-look="${f}" title="${stockLabel(f,category)}" aria-pressed="${currentLook===f}">
+      ${stockRoll(f,category)}
+      <img src="${photos[currentPhoto]}" loading="lazy" alt="" draggable="false" style="filter:${filters[f]||'none'}">
+      <span class="film-name">${stockLabel(f,category)}</span>
+    </button>`).join('')}
+   </div>${slider('Film Strength',100,0,100)}`;
+  const rail=node.querySelector('.filmrail');
+  rail.scrollLeft=filmRailPositions[category]||0;
+  rail.addEventListener('scroll',()=>{filmRailPositions[category]=rail.scrollLeft},{passive:true});
+  node.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{
+    if(category===b.dataset.cat)return;
+    filmRailPositions[category]=rail.scrollLeft;
+    category=b.dataset.cat;
+    renderControls();
+  });
+  node.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{
+    // Do not rebuild the horizontal list on selection: rebuilding resets scrollLeft.
+    currentLook=b.dataset.look;
+    filmRailPositions[category]=rail.scrollLeft;
+    rail.querySelectorAll('[data-look]').forEach(item=>{
+      const on=item===b;
+      item.classList.toggle('on',on);
+      item.setAttribute('aria-pressed',String(on));
+    });
+    renderEditorPhotoOnly();
+  });
  } else if(panel==='adjust'){
   const tools=Object.entries(groups).flatMap(([section,entries])=>entries.map(x=>({section,name:x[0],initial:x[1],min:x[2],max:x[3]})));
   tools.push({section:'DETAIL & ANALOG',name:'Date Stamp',initial:0,min:0,max:1});
