@@ -2,12 +2,56 @@ import SwiftUI
 import UIKit
 
 // Film and tools are intentionally separate, as on a dedicated analog editor.
+/// Small vector icon of a 35mm film canister with a short perforated film leader.
+/// Drawn locally so the Film menu never falls back to a clapperboard/film-strip SF Symbol.
+private struct FilmCanisterIcon: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(.primary.opacity(0.12))
+                .overlay { RoundedRectangle(cornerRadius: 2.5).strokeBorder(lineWidth: 1.5) }
+                .frame(width: 12, height: 17)
+                .offset(x: -3, y: 2.5)
+            RoundedRectangle(cornerRadius: 1.0)
+                .fill(.primary.opacity(0.85))
+                .frame(width: 7.5, height: 3)
+                .offset(x: -3, y: -8)
+            Capsule().fill(.primary.opacity(0.7))
+                .frame(width: 11, height: 1.4)
+                .offset(x: -3, y: -2.5)
+            Capsule().fill(.primary.opacity(0.7))
+                .frame(width: 11, height: 1.4)
+                .offset(x: -3, y: 8.5)
+            RoundedRectangle(cornerRadius: 0.9)
+                .fill(.primary.opacity(0.22))
+                .frame(width: 8, height: 5.5)
+                .offset(x: -3, y: 2.5)
+            Path { path in
+                path.move(to: CGPoint(x: 15, y: 7))
+                path.addQuadCurve(to: CGPoint(x: 21, y: 12),
+                                  control: CGPoint(x: 21, y: 6))
+                path.addLine(to: CGPoint(x: 21, y: 21))
+            }
+            .stroke(.primary, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            .frame(width: 24, height: 24)
+            VStack(spacing: 2.6) {
+                Capsule().fill(.primary).frame(width: 3, height: 1.1)
+                Capsule().fill(.primary).frame(width: 3, height: 1.1)
+                Capsule().fill(.primary).frame(width: 3, height: 1.1)
+            }
+            .offset(x: 9, y: 3.5)
+        }
+        .frame(width: 24, height: 24)
+        .accessibilityHidden(true)
+    }
+}
+
 private enum EditorPanel: String, CaseIterable, Identifiable {
     case film = "Film", tools = "Tools", lighting = "Lighting", composition = "Composition", border = "Border"
     var id: String { rawValue }
     var symbol: String {
         switch self {
-        case .film: "square.stack.3d.up"
+        case .film: "film" // custom 35mm canister is rendered below
         case .tools: "slider.horizontal.3"
         case .lighting: "sun.max"
         case .composition: "crop.rotate"
@@ -150,8 +194,12 @@ struct EditorView: View {
                                     }
                                 } label: {
                                     VStack(spacing: 5) {
-                                        Image(systemName: mode.symbol)
-                                            .font(.system(size: 18, weight: panel == mode ? .semibold : .regular))
+                                        if mode == .film {
+                                            FilmCanisterIcon()
+                                        } else {
+                                            Image(systemName: mode.symbol)
+                                                .font(.system(size: 18, weight: panel == mode ? .semibold : .regular))
+                                        }
                                         Text(mode.rawValue)
                                             .font(.system(size: 10, weight: panel == mode ? .semibold : .medium, design: .rounded))
                                             .lineLimit(1)
@@ -259,6 +307,12 @@ struct EditorView: View {
             store.updateRecipe(for: id) { $0.look = look }
         } label: {
             VStack(spacing: 6) {
+                HStack(spacing: 0) {
+                    FilmCanisterIcon().scaleEffect(0.75).frame(width: 19, height: 19)
+                    Spacer(minLength: 0)
+                }
+                .frame(width: 80, height: 19)
+                .accessibilityHidden(true)
                 Group {
                     if let photo = store.activePhoto,
                        let thumbnail = UIImage(contentsOfFile: AppFolders.thumbnail(photo).path) {
