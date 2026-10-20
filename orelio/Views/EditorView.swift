@@ -205,19 +205,18 @@ struct EditorView: View {
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                     }
-                                    .foregroundStyle(panel == mode ? Color(red: 0.87, green: 0.62, blue: 0.45) : .secondary)
-                                    .frame(maxWidth: .infinity, minHeight: 55)
-                                    .background(panel == mode ? Color.orange.opacity(0.11) : .clear,
-                                                in: RoundedRectangle(cornerRadius: 11))
+                                    .foregroundStyle(panel == mode ? Color.white : Color.white.opacity(0.78))
+                                    .frame(maxWidth: .infinity, minHeight: 60)
+                                    .background(Color.black)
                                     .overlay(alignment: .bottom) {
-                                        if panel == mode { Capsule().fill(Color.orange.opacity(0.9)).frame(width: 25, height: 2) }
+                                        if panel == mode { Capsule().fill(Color.white).frame(width: 26, height: 2) }
                                     }
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 8)
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color.black)
                         .onChange(of: store.activeID) { _, _ in selectedLightID = nil }
 
                         Group {
@@ -300,36 +299,74 @@ struct EditorView: View {
         }.padding(.top, 9)
     }
 
+    private func filmBadgeColor(_ look: FilmLook) -> Color {
+        switch look {
+        case .amber, .negMatte, .faded, .vintageGolden: Color(red: 0.98, green: 0.79, blue: 0.21)
+        case .forest, .vintageTeal: Color(red: 0.23, green: 0.60, blue: 0.27)
+        case .negSoft, .instantPink, .vintageMuted: Color(red: 0.81, green: 0.29, blue: 0.18)
+        case .negPortra, .chrome, .slideCool: Color(red: 0.24, green: 0.42, blue: 0.61)
+        case .negCool, .mono, .monoHigh, .monoMatte, .monoSilver, .monoSoft: Color(red: 0.29, green: 0.30, blue: 0.32)
+        case .slideVivid, .slidePastel, .slideDeep: Color(red: 0.31, green: 0.53, blue: 0.65)
+        default: Color(red: 0.72, green: 0.49, blue: 0.40)
+        }
+    }
+
+    private func filmISO(_ look: FilmLook) -> String {
+        let last = String(look.title.split(separator: " ").last ?? "")
+        return !last.isEmpty && last.allSatisfy({ $0.isNumber }) ? last : ""
+    }
+
     private func filmButton(_ look: FilmLook) -> some View {
         let selected = store.activePhoto?.recipe.look == look
+        let iso = filmISO(look)
+        let badge = filmBadgeColor(look)
+        let darkText = look == .amber || look == .negMatte || look == .faded || look == .vintageGolden
         return Button {
             guard let id = store.activeID else { return }
             store.updateRecipe(for: id) { $0.look = look }
         } label: {
             VStack(spacing: 6) {
-                HStack(spacing: 0) {
-                    FilmCanisterIcon().scaleEffect(0.75).frame(width: 19, height: 19)
-                    Spacer(minLength: 0)
+                ZStack(alignment: .topLeading) {
+                    Group {
+                        if let photo = store.activePhoto,
+                           let thumbnail = UIImage(contentsOfFile: AppFolders.thumbnail(photo).path) {
+                            Image(uiImage: thumbnail)
+                                .resizable()
+                                .scaledToFill()
+                                .saturation(look.category == .bw || look == .negCool ? 0 : look.category == .vintage ? 0.7 : 0.9)
+                                .overlay(look.category == .instant ? Color.orange.opacity(0.12) : Color.clear)
+                        } else {
+                            Rectangle().fill(Color.gray.opacity(0.2))
+                        }
+                    }
+                    .frame(width: 80, height: 85)
+                    .clipped()
+                    if !iso.isEmpty {
+                        Text(iso)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(darkText ? Color.black : Color.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(badge, in: RoundedRectangle(cornerRadius: 6))
+                            .padding(5)
+                    }
                 }
-                .frame(width: 80, height: 19)
-                .accessibilityHidden(true)
-                Group {
-                    if let photo = store.activePhoto,
-                       let thumbnail = UIImage(contentsOfFile: AppFolders.thumbnail(photo).path) {
-                        Image(uiImage: thumbnail)
-                            .resizable().scaledToFill()
-                            .saturation(look.category == .bw ? 0 : look.category == .vintage ? 0.7 : 0.9)
-                            .overlay(look.category == .instant ? Color.orange.opacity(0.12) : Color.clear)
-                    } else { Rectangle().fill(.gray.opacity(0.2)) }
+                .frame(width: 80, height: 85)
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 9)
+                        .strokeBorder(selected ? Color.white : Color.clear, lineWidth: 2)
                 }
-                .frame(width: 80, height: 82).clipped()
-                .overlay(alignment: .bottom) {
-                    if selected { Rectangle().fill(Color.orange).frame(height: 3) }
-                }
-                Text(look.title).font(.system(size: 10)).lineLimit(1)
-                    .foregroundStyle(selected ? .primary : .secondary)
-            }.frame(width: 82)
+                Text(look.title)
+                    .font(.system(size: 11, weight: selected ? .semibold : .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+                    .foregroundStyle(selected ? Color.primary : Color.secondary)
+                    .frame(width: 88)
+            }.frame(width: 88)
         }.buttonStyle(.plain)
+        .accessibilityLabel("\(look.title) preset")
     }
 
     private var toolPanel: some View {
