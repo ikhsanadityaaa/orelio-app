@@ -122,6 +122,20 @@ for ratio in CollageAspectRatio.allCases {
 let pageJSON = try JSONEncoder().encode(proportional)
 let copiedPage = try JSONDecoder().decode(CollagePage.self, from: pageJSON)
 check(copiedPage == proportional, "new collage settings round-trip and preserve IDs")
+
+// Background is stored independently on every collage page and survives save/restore.
+var whitePage = CollagePage(layout: .splitVertical)
+var blackPage = CollagePage(layout: .single, background: .black)
+check(whitePage.background == .white && blackPage.background == .black,
+      "each page can have its own white or black canvas")
+check(try JSONDecoder().decode(CollagePage.self,
+      from: JSONEncoder().encode(blackPage)).background == .black,
+      "black canvas survives JSON round-trip")
+let recoveredPaper = try JSONDecoder().decode(CollagePage.self,
+        from: Data(legacyPageJSON.utf8))
+check(recoveredPaper.background == .white, "old saved collage page defaults to white")
+check(CollageBackground.allCases == [.white, .black], "only supported paper colors")
+
 print("PASS: global aspect ratios, proportional seams and legacy collage decode")
 
 print("PASS: film catalog, adjustment roundtrip, page layouts")
