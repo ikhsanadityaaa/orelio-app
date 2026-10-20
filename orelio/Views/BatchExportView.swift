@@ -86,7 +86,8 @@ struct BatchExportView: View {
                         Button { exporter.retryFailed() } label: {
                             Label("Retry Failed Photos", systemImage: "arrow.clockwise.circle")
                         }
-                        .buttonStyle(OrelioActionButtonStyle())(exporter.isExporting)
+                        .buttonStyle(OrelioActionButtonStyle())
+                        .disabled(exporter.isExporting)
                     }
                     if let folder = exporter.exportFolder {
                         Text("Saved locally: \(folder.lastPathComponent)")
