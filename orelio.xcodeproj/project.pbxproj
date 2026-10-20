@@ -1,0 +1,99 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F49433C16D3B64C4E66F5727 /* orelioApp.swift in Sources */ = { isa = PBXBuildFile; fileRef = E669B9543B99D0C40E6D5C85 /* orelioApp.swift */; };
+		DF761AA6AF1BAE14DF5733FF /* BatchRecipeOperation.swift in Sources */ = { isa = PBXBuildFile; fileRef = 50595984C948F6A8D3AF22AB /* BatchRecipeOperation.swift */; };
+		C7ED5CE8FEEB75D74E121DC9 /* Models.swift in Sources */ = { isa = PBXBuildFile; fileRef = 1A03C214A26F5208186EDCFA /* Models.swift */; };
+		E07D658799AB3A0CD90A40C5 /* AppFolders.swift in Sources */ = { isa = PBXBuildFile; fileRef = 12DAE9376F99D9D03D2DADFB /* AppFolders.swift */; };
+		3DEC95992A519534D5A28785 /* CollageRenderer.swift in Sources */ = { isa = PBXBuildFile; fileRef = 53DB605C24795C6BB3A7DFBC /* CollageRenderer.swift */; };
+		C8666D3ABAFF32445B3276B1 /* ExportManager.swift in Sources */ = { isa = PBXBuildFile; fileRef = 232F040445789D328DB173CD /* ExportManager.swift */; };
+		FCBA1D045511C8FC5479D866 /* ImagePipeline.swift in Sources */ = { isa = PBXBuildFile; fileRef = ED955C9661C41207A2CACE7A /* ImagePipeline.swift */; };
+		E4CE6BFB09E89F88D4B1FB30 /* LibraryStore.swift in Sources */ = { isa = PBXBuildFile; fileRef = 0D01F3FCDA04CF3CEA6292BB /* LibraryStore.swift */; };
+		F87DFABC14C4C3FC79D9B472 /* BatchExportView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 2770DFD2500BBC517006918E /* BatchExportView.swift */; };
+		C3AE8824B62E1DF5E63AB4A0 /* CollageView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 6CF02EEB739A41A20C34A4E4 /* CollageView.swift */; };
+		2DB352444FC206D11E8329BC /* Components.swift in Sources */ = { isa = PBXBuildFile; fileRef = B1E76F7A3DDE322512C57528 /* Components.swift */; };
+		87DBC75D2F385C50161C0092 /* CompositionGridView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 4F6F7915BD9E9FF5E71CB3B8 /* CompositionGridView.swift */; };
+		DD8107330446662EFDDA5F06 /* EditorView.swift in Sources */ = { isa = PBXBuildFile; fileRef = C811D02A3F5373449668DBA7 /* EditorView.swift */; };
+		C99AE79AD9340AF516955BB9 /* LibraryView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 9FE49C2021675205E12618BC /* LibraryView.swift */; };
+		9E1E2962600901DEDD128AFD /* Assets.xcassets in Resources */ = { isa = PBXBuildFile; fileRef = AAAEE42C5AE66A9A5F18CAB8 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+
+/* Begin PBXFileReference section */
+		E669B9543B99D0C40E6D5C85 /* orelioApp.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = orelioApp.swift; sourceTree = "<group>"; };
+		50595984C948F6A8D3AF22AB /* BatchRecipeOperation.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchRecipeOperation.swift; sourceTree = "<group>"; };
+		1A03C214A26F5208186EDCFA /* Models.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		12DAE9376F99D9D03D2DADFB /* AppFolders.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFolders.swift; sourceTree = "<group>"; };
+		53DB605C24795C6BB3A7DFBC /* CollageRenderer.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollageRenderer.swift; sourceTree = "<group>"; };
+		232F040445789D328DB173CD /* ExportManager.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
+		ED955C9661C41207A2CACE7A /* ImagePipeline.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePipeline.swift; sourceTree = "<group>"; };
+		0D01F3FCDA04CF3CEA6292BB /* LibraryStore.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryStore.swift; sourceTree = "<group>"; };
+		2770DFD2500BBC517006918E /* BatchExportView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchExportView.swift; sourceTree = "<group>"; };
+		6CF02EEB739A41A20C34A4E4 /* CollageView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollageView.swift; sourceTree = "<group>"; };
+		B1E76F7A3DDE322512C57528 /* Components.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		4F6F7915BD9E9FF5E71CB3B8 /* CompositionGridView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositionGridView.swift; sourceTree = "<group>"; };
+		C811D02A3F5373449668DBA7 /* EditorView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		9FE49C2021675205E12618BC /* LibraryView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		AAAEE42C5AE66A9A5F18CAB8 /* Assets.xcassets */ = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		79F22817C88CF43CD622C093 /* product */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = orelio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+
+/* Begin PBXFrameworksBuildPhase section */
+		FDF72E3829033DD5C7429EC4 /* Frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+
+/* Begin PBXGroup section */
+		3B0C54E11C6DC39C72437ACD /* Root */ = { isa = PBXGroup; children = ( 217957BD17727A87283B1B4F /* orelio */, B98A37ED5FE04EC387D193AB /* Products */, ); sourceTree = "<group>"; };
+		B98A37ED5FE04EC387D193AB /* Products */ = { isa = PBXGroup; children = (79F22817C88CF43CD622C093 /* orelio.app */, ); name = Products; sourceTree = "<group>"; };
+		217957BD17727A87283B1B4F /* orelio */ = { isa = PBXGroup; children = ( 470909BF7B9702D36EB2268F /* App */, C6A164678210C774D896573A /* Models */, D6B043C447756003FF74C767 /* Resources */, 103290BB15917360C4D15C39 /* Services */, 1FCBD8C3076ECECC8E7316B3 /* Views */, ); path = orelio; sourceTree = "<group>"; };
+		470909BF7B9702D36EB2268F /* App */ = { isa = PBXGroup; children = ( E669B9543B99D0C40E6D5C85 /* orelioApp.swift */, ); path = App; sourceTree = "<group>"; };
+		C6A164678210C774D896573A /* Models */ = { isa = PBXGroup; children = ( 50595984C948F6A8D3AF22AB /* BatchRecipeOperation.swift */, 1A03C214A26F5208186EDCFA /* Models.swift */, ); path = Models; sourceTree = "<group>"; };
+		D6B043C447756003FF74C767 /* Resources */ = { isa = PBXGroup; children = ( AAAEE42C5AE66A9A5F18CAB8 /* Assets.xcassets */, ); path = Resources; sourceTree = "<group>"; };
+		103290BB15917360C4D15C39 /* Services */ = { isa = PBXGroup; children = ( 12DAE9376F99D9D03D2DADFB /* AppFolders.swift */, 53DB605C24795C6BB3A7DFBC /* CollageRenderer.swift */, 232F040445789D328DB173CD /* ExportManager.swift */, ED955C9661C41207A2CACE7A /* ImagePipeline.swift */, 0D01F3FCDA04CF3CEA6292BB /* LibraryStore.swift */, ); path = Services; sourceTree = "<group>"; };
+		1FCBD8C3076ECECC8E7316B3 /* Views */ = { isa = PBXGroup; children = ( 2770DFD2500BBC517006918E /* BatchExportView.swift */, 6CF02EEB739A41A20C34A4E4 /* CollageView.swift */, B1E76F7A3DDE322512C57528 /* Components.swift */, 4F6F7915BD9E9FF5E71CB3B8 /* CompositionGridView.swift */, C811D02A3F5373449668DBA7 /* EditorView.swift */, 9FE49C2021675205E12618BC /* LibraryView.swift */, ); path = Views; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+
+/* Begin PBXNativeTarget section */
+		F79F99C57F78A8CCDE660CB9 /* orelio */ = { isa = PBXNativeTarget; buildConfigurationList = FDB93B86A2531C3A3A77B3FF /* Build configuration list for PBXNativeTarget "orelio" */; buildPhases = (7856E3265BA10D0447C04B54 /* Sources */, FDF72E3829033DD5C7429EC4 /* Frameworks */, 437BC9BCAC2032A52F4CEFD8 /* Resources */, ); buildRules = (); dependencies = (); name = orelio; productName = orelio; productReference = 79F22817C88CF43CD622C093 /* orelio.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+
+/* Begin PBXProject section */
+		185C10BD31D48D9246F2D24F /* Project object */ = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1600; TargetAttributes = { F79F99C57F78A8CCDE660CB9 = { CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = 126AE3321FA8DEABC7D5E31A /* Build configuration list for PBXProject "orelio" */; compatibilityVersion = "Xcode 15.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base, ); mainGroup = 3B0C54E11C6DC39C72437ACD /* Root */; productRefGroup = B98A37ED5FE04EC387D193AB /* Products */; projectDirPath = ""; projectRoot = ""; targets = (F79F99C57F78A8CCDE660CB9 /* orelio */, ); };
+/* End PBXProject section */
+
+
+/* Begin PBXResourcesBuildPhase section */
+		437BC9BCAC2032A52F4CEFD8 /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (9E1E2962600901DEDD128AFD /* Assets.xcassets in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+
+/* Begin PBXSourcesBuildPhase section */
+		7856E3265BA10D0447C04B54 /* Sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (F49433C16D3B64C4E66F5727 /* orelioApp.swift in Sources */, DF761AA6AF1BAE14DF5733FF /* BatchRecipeOperation.swift in Sources */, C7ED5CE8FEEB75D74E121DC9 /* Models.swift in Sources */, E07D658799AB3A0CD90A40C5 /* AppFolders.swift in Sources */, 3DEC95992A519534D5A28785 /* CollageRenderer.swift in Sources */, C8666D3ABAFF32445B3276B1 /* ExportManager.swift in Sources */, FCBA1D045511C8FC5479D866 /* ImagePipeline.swift in Sources */, E4CE6BFB09E89F88D4B1FB30 /* LibraryStore.swift in Sources */, F87DFABC14C4C3FC79D9B472 /* BatchExportView.swift in Sources */, C3AE8824B62E1DF5E63AB4A0 /* CollageView.swift in Sources */, 2DB352444FC206D11E8329BC /* Components.swift in Sources */, 87DBC75D2F385C50161C0092 /* CompositionGridView.swift in Sources */, DD8107330446662EFDDA5F06 /* EditorView.swift in Sources */, C99AE79AD9340AF516955BB9 /* LibraryView.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+
+/* Begin XCBuildConfiguration section */
+		EA0CCA8466075AA2A82925D6 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES; COPY_PHASE_STRIP = NO; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		E17E556F653081A114D17E82 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES; COPY_PHASE_STRIP = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; name = Release; };
+		C4470ACCBB9953B8C70D40F1 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = orelio; INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES; INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "orelio imports your photos into its local editing library."; INFOPLIST_KEY_UIFileSharingEnabled = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; MARKETING_VERSION = 0.5.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.orelio; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
+		00363C1601E9873340276EA7 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = orelio; INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES; INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "orelio imports your photos into its local editing library."; INFOPLIST_KEY_UIFileSharingEnabled = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; MARKETING_VERSION = 0.5.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.orelio; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+
+/* Begin XCConfigurationList section */
+		126AE3321FA8DEABC7D5E31A /* Build configuration list for PBXProject "orelio" */ = { isa = XCConfigurationList; buildConfigurations = (EA0CCA8466075AA2A82925D6 /* Debug */, E17E556F653081A114D17E82 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		FDB93B86A2531C3A3A77B3FF /* Build configuration list for PBXNativeTarget "orelio" */ = { isa = XCConfigurationList; buildConfigurations = (C4470ACCBB9953B8C70D40F1 /* Debug */, 00363C1601E9873340276EA7 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 185C10BD31D48D9246F2D24F /* Project object */;
+}

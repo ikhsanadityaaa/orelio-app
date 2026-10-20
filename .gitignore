@@ -1,0 +1,7 @@
+# Xcode and Swift build outputs
+.build-iphone/
+.build-simulator/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store

@@ -1,0 +1,34 @@
+name: iOS unsigned compile check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  compile-ios:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode toolchain
+        run: xcodebuild -version
+      - name: Compile iOS Simulator app without code signing
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x tools/build_simulator_on_mac.sh
+          ./tools/build_simulator_on_mac.sh
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-compile-log
+          path: .build-simulator/xcodebuild.log
+          if-no-files-found: ignore
+      - name: Upload Simulator binary (NOT installable on physical iPhone)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orelio-simulator-only
+          path: .build-simulator/Build/Products/Debug-iphonesimulator/orelio.app
+          if-no-files-found: error
