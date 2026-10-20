@@ -108,13 +108,24 @@ section[data-view="edit"] .paneltab.on{background:transparent;color:#fff;box-sha
 .edit-controls .film-thumb{position:relative;display:block;flex:none;width:86px;height:107px;border-radius:10px;overflow:hidden;background:#282828;border:2px solid transparent;box-sizing:border-box}
 .edit-controls .film-item.on .film-thumb{border-color:#fff}
 .edit-controls .film-thumb img{width:100%;height:100%;display:block;margin:0;object-fit:cover;border:0;border-radius:0}
-.edit-controls .film-iso{position:absolute;z-index:3;top:6px;left:6px;padding:3px 7px;min-width:24px;box-sizing:border-box;border-radius:7px;font-size:13px;line-height:19px;font-weight:800;letter-spacing:-.35px;text-align:center;font-variant-numeric:tabular-nums;pointer-events:none}
+
 .edit-controls .film-name{font-size:11px;line-height:15px;font-weight:500;color:#f3f3f3;text-transform:none}
 .edit-controls .filmrail{padding:5px 9px 12px;gap:8px}
 .edit-controls .chips{padding-top:8px}
+
+/* Approved design: color bar OUTSIDE and ABOVE the thumbnail with a visible black gap.
+   No ISO text, badge or brand label is drawn on top of the photo. */
+.edit-controls .film-item { gap:5px; }
+.edit-controls .film-color-bar {
+ display:block; flex:0 0 5px; box-sizing:border-box;
+ width:82px; height:5px; margin:0 auto 3px;
+ border-radius:999px; box-shadow:none;
+}
+.edit-controls .film-thumb { border-radius:9px; }
+.edit-controls .film-item.on .film-thumb { border-color:#fff; }
 </style></head><body><div class="wrap"><div class="subnote">Interactive iPhone UI prototype · v0.5</div><div class="device"><div class="notch"></div><div class="status"><span>9:41</span><span>▂▃▅ ◉ ▰</span></div><div class="app">
 <section class="screen on" data-view="library"><div class="top"><strong>Library</strong><div class="right"><span class="tiny">● OFFLINE</span><button class="iconbtn" id="multi">Select</button><button class="iconbtn" id="importBtn">＋</button></div></div><div class="inner"><div class="eyebrow">YOUR PHOTOGRAPHS</div><div class="hint">12 photos · Local collection</div></div><div class="scroll"><div class="photo-grid" id="grid"></div></div><div class="tray" id="selectionTray"><div class="tray-row"><span id="selectCount" class="muted">0 selected</span><button class="textbtn" id="allBtn"><span aria-hidden="true">◉</span> Select all</button></div><div class="tray-row"><button class="action action-with-icon" id="pasteBtn"><span class="btnicon" aria-hidden="true">⧉</span><span>Paste edits</span></button><button class="plain action-with-icon" id="selExport"><span class="btnicon" aria-hidden="true">⇧</span><span>Batch export</span></button></div></div></section>
-<section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon modeicon--film"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7.5" y="9" width="15" height="19" rx="3" fill="currentColor" fill-opacity=".10"/><path d="M7.5 13h15M7.5 24h15"/><rect x="11.2" y="5.5" width="7.6" height="3.5" rx="1" fill="currentColor" fill-opacity=".35"/><rect x="10.5" y="15.8" width="9" height="5.4" rx="1" fill="currentColor" fill-opacity=".20" stroke-width="1"/><path d="M22.5 11.5C27 10 28.2 13.2 28.2 16v11"/><path d="M25.4 16.5h2.8m-2.8 4h2.8m-2.8 4h2.8" stroke-width="1.3"/></svg></span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Composition</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
+<section class="screen" data-view="edit"><div class="top"><div class="right"><button class="iconbtn" id="backToLib">‹</button><strong>Photo editor</strong></div><div class="right"><button class="iconbtn" id="copyBtn" title="Copy adjustments">⧉</button><button class="iconbtn" id="resetBtn" title="Reset">↶</button></div></div><div class="stage" id="stage"><div class="photo-window" id="photoWindow"><img id="mainPhoto" alt="Edited photo"><img id="dreamGlow" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen;z-index:1"><div class="wash" id="wash"></div><svg id="gridOverlay" class="guide-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg><div class="light-handle" id="lightHandle">＋</div></div><div class="stagemeta" id="photoCounter">PHOTO 01 / 12</div></div><div class="panels"><button class="paneltab on" data-panel="film"><span class="modeicon modeicon--film"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="9" width="16" height="19" rx="3"/><rect x="13" y="5" width="6" height="4" rx="1" fill="currentColor" stroke="none"/><path d="M8 15h16"/></svg></span>Film</button><button class="paneltab" data-panel="adjust"><span class="modeicon">☷</span>Tools</button><button class="paneltab" data-panel="light"><span class="modeicon">☀</span>Lighting</button><button class="paneltab" data-panel="guide"><span class="modeicon">⊞</span>Composition</button><button class="paneltab" data-panel="border"><span class="modeicon">▢</span>Border</button></div><div class="edit-controls" id="editControls"><div class="inner" id="controlArea"></div></div></section>
 <section class="screen" data-view="collage"><div class="top"><strong>Collage</strong><span class="tiny">● OFFLINE</span></div><div class="pagebar" id="pageBar"></div><div class="canvasrow"><strong id="pageLabel">Page 1 of 1</strong><button class="plain" id="chooseLayout">▦ Choose Layout</button></div><div class="scroll"><div id="canvas" class="canvas"></div><div class="papercontrols"><button class="iconbtn" id="prevPage">← Move</button><button class="iconbtn" id="nextPage">Move →</button><button class="iconbtn" id="removePage">Delete</button></div><div class="inner" style="padding-top:0"><div class="labelbar">Frame spacing <span id="gapText">3%</span></div><input type="range" id="gapSlider" min="0" max="8" value="3" style="width:100%;accent-color:var(--accent)"></div><div class="smallnote">Tap a frame to replace its photo. Add pages and choose layouts individually.</div></div><div class="footaction"><button class="action" id="pageExport" style="width:100%">Export 1 page · demo</button></div></section>
 <section class="screen" data-view="export"><div class="top"><strong>Batch export</strong><span class="tiny">● OFFLINE</span></div><div class="scroll"><div class="inner"><div class="hint" id="exportSummary">12 photos ready · originals preserved</div><div class="formcard" style="margin-top:14px"><h3>Photos to export</h3><div class="strip" id="selectedStrip"></div></div><div class="formcard"><h3>Output settings</h3><div class="line"><span>Format</span><select><option>JPEG</option><option>HEIC</option><option>PNG</option></select></div><div class="line"><span>Longest edge</span><select><option>Original</option><option>3000 px</option><option>2048 px</option></select></div><div class="sliderrow"><label>Quality <span id="qualityValue">90%</span></label><input type="range" min="50" max="100" value="90" oninput="document.getElementById('qualityValue').textContent=this.value+'%'" /></div></div><div class="formcard"><h3>Export queue</h3><div class="progress"><i id="progressTrack"></i></div><div class="muted" id="progressText">Ready to export</div><p class="tiny">Preview simulates queue completion; real files are not generated here.</p><button id="startExport" class="action" style="width:100%">Simulate batch export</button></div></div></div></section>
 <nav class="tabbar"><button class="tab on" data-tab="library"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Library</button><button class="tab" data-tab="edit"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 17h18"/><circle cx="8" cy="7" r="3" fill="#191613"/><circle cx="16" cy="17" r="3" fill="#191613"/></svg>Edit</button><button class="tab" data-tab="collage"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18"/></svg>Collage</button><button class="tab" data-tab="export"><svg viewBox="0 0 24 24"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 14v6h16v-6"/></svg>Export</button></nav>
@@ -133,24 +144,27 @@ for(const [f,a] of Object.entries(families)){for(let i=0;i<8;i++){const n=['Soft
    Keep image effect IDs independent of the visible stock labels. */
 // Film-stock-inspired presentation labels. Internal edit/preview keys remain stable.
 const filmStockNames={"Negative":["Gold 200","Fujia 200","Porta 400","Provia 100","Trix 400","Gold 800","Superia 160","Fujia 400","Ektra 200","Porta 800","Procolor 100","Fujia 100","Colorplus 400","Vision 800"],"Slide":["Ektra 100","Velvia 100","Astia 50","Provia 200","Kodach 64","Agfa 100","Velvia 200","Ektra 50","Chrome 100","Reala 200","Privia 64","Velvia 400","Agfa 200"],"Instant":["Insta 600","Insta 100","Polax 400","SX 70","Insta 200","OneStep 100","Instax 200","Polax 100","Insta 160","Wide 400","Polax 200","SX 300","Insta 400"],"Vintage":["Gold 400","Kodach 200","Fujia 400","Color 160","Panchro 400","Gold 100","Vision 320","Kodach 400","Color 200","Gold 1000","Vision 50","Panchro 100","Color 800"],"B&W":["Trix 320","Delta 100","HP5 400","PanF 50","Tmax 800","Delta 50","HP5 320","Tmax 400","Trix 200","Delta 800","Acros 100","Trix 400","Tmax 640"]};
-const filmStockColors={"Negative":["#F5CD39","#388E3C","#D54D2D","#426892","#505357","#F2BE34","#439347","#317F42","#D8AB46","#CB6244","#D4B943","#5E9B67","#D8A64C","#5D5166"],"Slide":["#416793","#D1432F","#6A8F64","#365E89","#C59D3A","#487862","#B83B30","#B99D52","#5385AC","#489483","#527498","#A34F48","#487C67"],"Instant":["#DDBD8C","#E1D5BD","#CC6C78","#A17557","#CCA565","#C68C48","#459C80","#D7A3A5","#D8C9B3","#9E9F91","#83A176","#A29CC4","#7D8A9E"],"Vintage":["#F1C23E","#D3A237","#3E9350","#C47853","#7D7870","#E1B73F","#A38C73","#C4983E","#B98F65","#CA913C","#B4665A","#625D77","#C4A082"],"B&W":["#4A4C50","#919698","#515358","#ABB0B2","#42464C","#BCC0BD","#5F6267","#686C75","#94999A","#373A40","#B5B8BB","#4D5056","#79808A"]};
+// One canonical color per film-stock family, used by EVERY preset card.
+const FILM_BAR_COLORS=Object.freeze({
+ kodak:'#F5C518', fuji:'#2D9855', instant:'#D8C5A4',
+ mono:'#969696', agfa:'#D44F4F', neutral:'#B0B0B0'
+});
+function stockBarColor(key,group) {
+ if(key==='Original')return FILM_BAR_COLORS.neutral;
+ const family=stockLabel(key,group).split(' ')[0].toLowerCase();
+ if(['gold','porta','portra','ektra','kodach','colorplus','procolor','vision','color','trix','tmax'].includes(family))return FILM_BAR_COLORS.kodak;
+ if(['fujia','fuji','provia','privia','velvia','astia','superia','reala','acros','instax','wide'].includes(family))return FILM_BAR_COLORS.fuji;
+ if(['agfa'].includes(family))return FILM_BAR_COLORS.agfa;
+ if(['insta','polax','sx','onestep'].includes(family))return FILM_BAR_COLORS.instant;
+ if(['delta','hp5','panf','panchro'].includes(family))return FILM_BAR_COLORS.mono;
+ return FILM_BAR_COLORS.neutral;
+}
 const filmRailPositions=Object.create(null);
 allLooks=['Original',...Object.values(families).flat()];
 function stockLabel(key,group){
  if(key==='Original')return 'original';
  const idx=(families[group]||[]).indexOf(key);
  return filmStockNames[group]?.[idx] || String(key).toLowerCase();
-}
-function stockBadge(key,group){
- if(key==='Original')return '';
- const idx=(families[group]||[]).indexOf(key);
- const label=stockLabel(key,group);
- const match=label.match(/(\d{2,4})$/);
- if(!match)return '';
- const color=filmStockColors[group]?.[idx]||'#D5A54F';
- const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
- const luminance=(rgb[0]*299+rgb[1]*587+rgb[2]*114)/1000;
- return '<span class="film-iso" aria-hidden="true" style="background:'+color+';color:'+(luminance>150?'#151515':'#fff')+'">'+match[1]+'</span>';
 }
 // The Trix 400 look must produce a monochrome result, not only a monochrome badge.
 filters[families.Negative[4]]='grayscale(1) contrast(1.12)';
@@ -240,9 +254,9 @@ function renderControls(){
   node.innerHTML=`<div class="chips">${Object.keys(families).map(c=>`<button data-cat="${c}" class="${category===c?'on':''}">${c.toUpperCase()}</button>`).join('')}</div>
    <div class="filmrail" data-category="${category}" aria-label="Film stock presets">
     ${stocks.map(f=>`<button type="button" class="film-item ${currentLook===f?'on':''}" data-look="${f}" title="${stockLabel(f,category)}" aria-pressed="${currentLook===f}">
+      <span class="film-color-bar" style="background:${stockBarColor(f,category)}" aria-hidden="true"></span>
       <span class="film-thumb">
         <img src="${photos[currentPhoto]}" loading="lazy" alt="" draggable="false" style="filter:${filters[f]||'none'}">
-        ${stockBadge(f,category)}
       </span>
       <span class="film-name">${stockLabel(f,category)}</span>
     </button>`).join('')}
