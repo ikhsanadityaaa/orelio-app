@@ -62,14 +62,23 @@ check(ExportResolution.large.longestSide == 3000, "large export")
 check(ExportResolution.social.longestSide == 2048, "social export")
 print("PASS: resolution presets")
 
-check(FilmCategory.allCases.count == 4, "four film families; no Vintage tab")
-check(FilmLook.inCategory(.negative).count == 9, "Negative includes color Vintage looks")
+check(FilmCategory.allCases.count == 3, "three film families; no Vintage or Slide tab")
+check(FilmLook.inCategory(.negative).count == 14, "Negative includes Vintage color and former Slide looks")
 check(FilmLook.inCategory(.bw).count == 7, "B&W includes monochrome looks formerly in Negative and Vintage")
 check(FilmLook.inCategory(.bw).contains(.negCool), "Trix moved to B&W")
 check(FilmLook.inCategory(.bw).contains(.vintage1979), "Panchro moved to B&W")
 check(FilmLook.inCategory(.negative).contains(.faded), "Vintage color merged into Negative")
+check(FilmLook.inCategory(.negative).contains(.slideVivid), "Slide looks merged into Negative")
 check(Set(FilmCategory.allCases.flatMap { FilmLook.inCategory($0) }).count == FilmLook.allCases.count - 1,
       "all non-original film looks remain accessible exactly once")
+for category in FilmCategory.allCases {
+    let looks = FilmLook.inCategory(category)
+    let names = looks.map(\.title)
+    check(names == names.sorted { $0.localizedStandardCompare($1) == .orderedAscending },
+          "\(category.rawValue) presets sorted A-Z")
+}
+check(FilmCategory.allCases.map(\.rawValue) == ["Negative", "Instant", "B&W"],
+      "exact category order Negative, Instant, B&W")
 var improved = EditRecipe()
 improved.strength = 0.4
 improved.clarity = 0.7
