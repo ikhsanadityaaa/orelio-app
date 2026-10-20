@@ -12,7 +12,7 @@
 ## Implemented in project source
 
 - Removed in-app brand wordmark from working-screen UI (the v0.2 native screen already used generic navigation titles).
-- 27 film looks including Original, arranged into four visible tabs: Negative, Slide, Instant and B&W. Former Vintage color looks appear under Negative; all monochrome looks appear under B&W. Existing recipe IDs remain unchanged.
+- 27 native film looks including Original, arranged into three visible tabs: Negative, Instant and B&W. Former Slide and Vintage color looks appear under Negative; all monochrome looks appear under B&W. Film presets display alphabetically A-Z within each tab (Original pinned first), while saved recipe IDs remain unchanged. The standalone browser preview offers an expanded 66-look catalogue.
 - Film strength plus expanded adjustment state and local Core Image processing.
 - Model migration/defaults supporting v0.1 and v0.2 recipe manifests.
 - Selective paste now transfers all new groups of adjustments.
