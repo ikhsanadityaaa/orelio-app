@@ -5,7 +5,7 @@ enum AppTab: Hashable {
 }
 
 enum FilmCategory: String, CaseIterable, Identifiable {
-    case negative = "Negative", slide = "Slide", instant = "Instant", vintage = "Vintage", bw = "B&W"
+    case negative = "Negative", slide = "Slide", instant = "Instant", bw = "B&W"
     var id: String { rawValue }
 }
 
@@ -21,11 +21,10 @@ enum FilmLook: String, CaseIterable, Codable, Identifiable {
     var category: FilmCategory? {
         switch self {
         case .original: nil
-        case .amber, .forest, .negSoft, .negPortra, .negCool, .negMatte: .negative
+        case .amber, .forest, .negSoft, .negPortra, .negMatte, .faded, .vintageGolden, .vintageTeal, .vintageMuted: .negative
         case .chrome, .slideVivid, .slidePastel, .slideCool, .slideDeep: .slide
         case .instantWarm, .instantSoft, .instantPink, .instantDust, .instantBleach: .instant
-        case .faded, .vintageGolden, .vintageTeal, .vintageMuted, .vintage1979: .vintage
-        case .mono, .monoSoft, .monoHigh, .monoMatte, .monoSilver: .bw
+        case .negCool, .vintage1979, .mono, .monoSoft, .monoHigh, .monoMatte, .monoSilver: .bw
         }
     }
     // Display names inspired by analog film stocks. Preserve the Codable raw cases for saved edits.
