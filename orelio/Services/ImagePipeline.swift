@@ -37,7 +37,7 @@ private extension FilmLook {
         case .vintageGolden: FilmGrade(contrast: 1.05, saturation: 0.87, warmth: 0.48, brightness: 0.015, mono: false)
         case .vintageTeal: FilmGrade(contrast: 1.03, saturation: 0.82, warmth: -0.23, brightness: 0.0, mono: false)
         case .vintageMuted: FilmGrade(contrast: 0.82, saturation: 0.64, warmth: 0.15, brightness: 0.06, mono: false)
-        case .vintage1979: FilmGrade(contrast: 1.12, saturation: 0.81, warmth: 0.32, brightness: -0.005, mono: false)
+        case .vintage1979: FilmGrade(contrast: 1.12, saturation: 0, warmth: 0, brightness: -0.005, mono: true) // Panchro 400 belongs to B&W
         case .mono: FilmGrade(contrast: 1.22, saturation: 0, warmth: 0, brightness: 0, mono: true)
         case .monoSoft: FilmGrade(contrast: 0.87, saturation: 0, warmth: 0, brightness: 0.025, mono: true)
         case .monoHigh: FilmGrade(contrast: 1.40, saturation: 0, warmth: 0, brightness: -0.025, mono: true)
