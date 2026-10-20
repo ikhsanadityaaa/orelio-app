@@ -144,6 +144,31 @@ for(const [f,a] of Object.entries(families)){for(let i=0;i<8;i++){const n=['Soft
    Keep image effect IDs independent of the visible stock labels. */
 // Film-stock-inspired presentation labels. Internal edit/preview keys remain stable.
 const filmStockNames={"Negative":["Gold 200","Fujia 200","Porta 400","Provia 100","Trix 400","Gold 800","Superia 160","Fujia 400","Ektra 200","Porta 800","Procolor 100","Fujia 100","Colorplus 400","Vision 800"],"Slide":["Ektra 100","Velvia 100","Astia 50","Provia 200","Kodach 64","Agfa 100","Velvia 200","Ektra 50","Chrome 100","Reala 200","Privia 64","Velvia 400","Agfa 200"],"Instant":["Insta 600","Insta 100","Polax 400","SX 70","Insta 200","OneStep 100","Instax 200","Polax 100","Insta 160","Wide 400","Polax 200","SX 300","Insta 400"],"Vintage":["Gold 400","Kodach 200","Fujia 400","Color 160","Panchro 400","Gold 100","Vision 320","Kodach 400","Color 200","Gold 1000","Vision 50","Panchro 100","Color 800"],"B&W":["Trix 320","Delta 100","HP5 400","PanF 50","Tmax 800","Delta 50","HP5 320","Tmax 400","Trix 200","Delta 800","Acros 100","Trix 400","Tmax 640"]};
+// Only four tabs. Preserve internal look keys and all film effects while reclassifying.
+// Every monochrome stock belongs to B&W, even if previously in Negative or Vintage.
+const reclassifiedFamilies={Negative:[],Slide:[],Instant:[],'B&W':[]};
+const reclassifiedNames={Negative:[],Slide:[],Instant:[],'B&W':[]};
+const bAndWStock=/^(trix|tmax|delta|hp5|panf|panchro|acros)\b/i;
+for(const [oldGroup,keys] of Object.entries(families)){
+ keys.forEach((key,i)=>{
+  const label=filmStockNames[oldGroup]?.[i];
+  if(!label)throw new Error('Missing film name '+oldGroup+' index '+i);
+  const nextGroup=bAndWStock.test(label)||oldGroup==='B&W'
+    ? 'B&W' : oldGroup==='Vintage' ? 'Negative' : oldGroup;
+  reclassifiedFamilies[nextGroup].push(key);
+  reclassifiedNames[nextGroup].push(label);
+ });
+}
+delete families.Vintage;
+delete filmStockNames.Vintage;
+for(const name of ['Negative','Slide','Instant','B&W']){
+ families[name]=reclassifiedFamilies[name];
+ filmStockNames[name]=reclassifiedNames[name];
+}
+for(const key of families['B&W']){
+ const base=filters[key]||'none';
+ filters[key]=base.includes('grayscale(') ? base : base==='none' ? 'grayscale(1)' : 'grayscale(1) '+base;
+}
 // One canonical color per film-stock family, used by EVERY preset card.
 const FILM_BAR_COLORS=Object.freeze({
  kodak:'#F5C518', fuji:'#2D9855', instant:'#D8C5A4',
@@ -166,9 +191,6 @@ function stockLabel(key,group){
  const idx=(families[group]||[]).indexOf(key);
  return filmStockNames[group]?.[idx] || String(key).toLowerCase();
 }
-// The Trix 400 look must produce a monochrome result, not only a monochrome badge.
-filters[families.Negative[4]]='grayscale(1) contrast(1.12)';
-
 const groups={'LIGHT & TONE':[['Exposure',0,-100,100],['Contrast',0,-100,100],['Clarity',0,0,100],['Shadows',0,-100,100],['Highlights',0,-100,100],['Glow',0,0,100],['Halation',0,0,100]],'COLOR':[['Saturation',0,-100,100],['Warmth',0,-100,100],['Pre Warmth',0,-100,100],['Post Warmth',0,-100,100],['Pre Tint',0,-100,100],['Post Tint',0,-100,100]],'DETAIL & ANALOG':[['Sharpen',0,0,100],['Film Grain',0,0,100],['Grain Size',50,0,100],['Vignette',0,0,100],['Fade',0,0,100],['Vintage Lens',0,0,100],['Dust',0,0,100]]};
 const layouts={'Full Bleed':[[0,0,1,1]],'Split V':[[0,0,.5,1],[.5,0,.5,1]],'Split H':[[0,0,1,.5],[0,.5,1,.5]],Triptych:[[0,0,1,.6],[0,.6,.5,.4],[.5,.6,.5,.4]],Editorial:[[0,0,.67,1],[.67,0,.33,.5],[.67,.5,.33,.5]],Mosaic:[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]};
 function toast(msg){let x=byId('toast');x.textContent=msg;x.classList.add('on');clearTimeout(window.to);window.to=setTimeout(()=>x.classList.remove('on'),2200)}
