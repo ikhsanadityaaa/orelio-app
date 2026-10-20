@@ -70,8 +70,12 @@ struct CollageView: View {
                     HStack {
                         Text(currentPage.layout.title).font(.subheadline.weight(.medium))
                         Spacer()
-                        Button("Move Left") { shiftPage(-1) }.disabled(pageIndex == 0)
-                        Button("Move Right") { shiftPage(1) }.disabled(pageIndex == pages.count - 1)
+                        Button { shiftPage(-1) } label: { Label("Left", systemImage: "arrow.left") }
+                            .buttonStyle(.bordered)
+                            .disabled(pageIndex == 0)
+                        Button { shiftPage(1) } label: { Label("Right", systemImage: "arrow.right") }
+                            .buttonStyle(.bordered)
+                            .disabled(pageIndex == pages.count - 1)
                     }.font(.caption)
                     HStack {
                         Text("Spacing").font(.caption)
@@ -86,12 +90,14 @@ struct CollageView: View {
                     if !output.isEmpty {
                         Label("\(output.count) pages saved to export folder", systemImage: "checkmark.circle.fill")
                             .font(.caption).foregroundStyle(.green)
-                        Button("Share / Save Pages") { showShare = true }.buttonStyle(.bordered)
+                        Button { showShare = true } label: {
+                            Label("Share / Save Pages", systemImage: "square.and.arrow.up")
+                        }.buttonStyle(OrelioActionButtonStyle())
                     }
                     Button { exportPages() } label: {
                         Label("Export \(pages.count) Page\(pages.count == 1 ? "" : "s")", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
-                    }.buttonStyle(.borderedProminent).disabled(isWorking || pages.allSatisfy { $0.photoIDs.allSatisfy { $0 == nil } })
+                    }.buttonStyle(OrelioActionButtonStyle(tone: .primary)).disabled(isWorking || pages.allSatisfy { $0.photoIDs.allSatisfy { $0 == nil } })
                 }.padding(16)
             }
             .navigationBarTitleDisplayMode(.inline)
