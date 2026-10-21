@@ -1,39 +1,36 @@
-# orelio v0.5 — panduan pemasangan gratis tanpa Mac
+# Orelio — instalasi IPA gratis di iPhone menggunakan Windows
 
-## Penting
+## 1. Download IPA yang benar (BUKAN simulator)
 
-- Tidak ada opsi Android-style "install from unknown sources" di iPhone Indonesia.
-- Anda tidak perlu berlangganan Apple Developer Program untuk uji pribadi.
-- Paket ini masih **source code + workflow**, bukan IPA hasil build. Build perlu dilakukan di macOS GitHub Actions, dan bisa gagal jika kode Xcode menemukan masalah; cek lognya.
-- Jangan unggah Apple ID, password, sertifikat, atau provisioning profile ke GitHub.
+Repository: https://github.com/ikhsanadityaaa/orelio-app
 
-## Tahap A — compile IPA menggunakan GitHub Actions
+1. Di GitHub, buka **Actions**.
+2. Pilih workflow **Build unsigned iPhone IPA (free sideload)**.
+3. Pilih run terbaru yang ditandai **Success** pada branch `main`.
+4. Di halaman run, buka bagian **Artifacts**, pilih **orelio-unsigned-iphone-ipa** (bukan `orelio-simulator-only`).
+5. Download ZIP artifact, lalu **extract** hingga mendapat **`orelio-unsigned.ipa`**.
+6. Jangan extract isi file `.ipa` lagi. Seret file `.ipa` tersebut ke Sideloadly.
 
-1. Masuk ke GitHub dan buat repository baru, lebih baik **Private** supaya source aplikasi tidak terbuka untuk umum. Gunakan kuota GitHub Actions gratis yang tersedia; hentikan penggunaan sebelum melewati kuota.
-2. Upload **semua isi** folder paket ini ke **root repository**, termasuk `.github/workflows/build-unsigned-ipa.yml` dan `orelio.xcodeproj`.
-   - Cara yang lebih mudah untuk mempertahankan folder tersembunyi `.github`: ekstrak ZIP di PC, buka terminal di folder, lalu jalankan `git init`, `git add .`, `git commit -m "orelio free sideload"`, dan push ke repository yang dibuat.
-3. Di GitHub, buka **Actions → Build unsigned iPhone IPA (free sideload) → Run workflow**.
-4. Jika berhasil, buka run tersebut → Artifacts → `orelio-unsigned-iphone-ipa`; download ZIP artifact dan ekstrak file `orelio-unsigned.ipa`.
-5. Jika gagal, download artifact `orelio-device-build-log` dan perbaiki error Xcode sebelum mengulangi. Proyek **belum pernah diuji dengan Xcode di lingkungan ini**.
+Build baru otomatis dibuat ketika source iOS atau workflow IPA berubah. Untuk menjalankan secara manual: **Actions → Build unsigned iPhone IPA (free sideload) → Run workflow → main → Run workflow**.
 
-Catatan: workflow hanya berjalan bila Anda menjalankannya secara manual, agar tidak menghabiskan kuota secara tak sengaja.
+**Info penting:** Paket ini adalah iPhone **arm64/iphoneos** yang belum ditandatangani (unsigned). Proses build sukses memastikan kompilasi dan struktur paket, bukan menjamin berhasil diinstal pada setiap iPhone.
 
-## Tahap B — instalasi IPA ke iPhone tanpa bayar (Windows)
+## 2. Pasang dengan Sideloadly di Windows
 
-1. Unduh Sideloadly dari sumber resmi: https://sideloadly.io/
-2. Instal iTunes dan iCloud untuk Windows sebagaimana disarankan oleh situs Sideloadly jika perangkat tidak terdeteksi.
-3. Sambungkan iPhone ke Windows dengan kabel, buka kunci, dan tap **Trust This Computer**.
-4. Buka Sideloadly, pilih iPhone, seret `orelio-unsigned.ipa`, pilih **Apple ID Sideload**, dan ikuti proses autentikasi memakai Apple Account gratis Anda. Jangan kirim detail akun kepada siapa pun.
-5. Jika diminta, di iPhone buka **Settings → General → VPN & Device Management**, lalu percayai profil pengembang Anda. Buka **Settings → Privacy & Security → Developer Mode** bila diperlukan, dan restart sesuai petunjuk.
-6. Buka orelio dari layar utama iPhone. Jika instalasi gagal, simpan pesan error Sideloadly dan log dari GitHub Actions.
+1. Di Windows, unduh **Sideloadly** dari https://sideloadly.io/
+2. Jika diminta Sideloadly, pasang iTunes/iCloud yang kompatibel untuk mendeteksi iPhone.
+3. Hubungkan iPhone ke komputer dengan kabel, buka kuncinya, dan setujui **Trust This Computer**.
+4. Buka Sideloadly, pilih perangkat Anda, lalu masukkan file **`orelio-unsigned.ipa`**.
+5. Pilih mode **Apple ID Sideload**, masukkan Apple Account sendiri melalui proses autentikasi Sideloadly, dan jalankan instalasi. **Jangan pernah mengirim password, kode 2FA atau Apple ID ke chat/GitHub.**
+6. Jika iPhone meminta persetujuan, buka **Settings → General → VPN & Device Management** dan percayai profil pengembang yang sesuai. Aktifkan **Settings → Privacy & Security → Developer Mode** apabila diminta.
 
-## Batasan gratis
+Apple Account gratis umumnya membatasi masa signing aplikasi sekitar **7 hari** dan jumlah aplikasi sideload aktif. Perlu refresh/instal ulang setelah masa itu.
 
-- Masa berlaku penandatanganan biasanya **7 hari**; perlu refresh atau instal ulang secara berkala.
-- Batas umumnya **3 aplikasi sideload aktif** pada akun Apple gratis.
-- Sideloadly menawarkan penyegaran otomatis melalui PC bila disetel dengan benar.
-- Proses build cloud, autentikasi dan instalasi awal membutuhkan internet; **editing foto orelio tetap dirancang offline setelah terpasang**.
+## 3. Kalau gagal
 
-## Alternatif
+- **ZIP berisi `Info.plist`, `Assets.car`, `orelio`, `__preview.dylib`**: itu kemungkinan besar artifact **simulator** yang salah. Jangan instal isi folder tersebut.
+- **Run workflow merah/Failed**: klik **Build real iPhone arm64 app and package unsigned IPA** pada run dan ambil error log; atau unduh artifact **orelio-device-build-log**.
+- **Sideloadly menolak IPA**: simpan error lengkap, tipe iPhone dan versi iOS, lalu laporkan untuk memperbaiki paket/signing. Perhatikan kompatibilitas minimum iOS 17.
+- **IPA hanya dibuka di Files iPhone**: itu bukan cara pemasangan aplikasi unsigned. Gunakan Windows + Sideloadly untuk menandatangani.
 
-Jika hanya memiliki iPhone (tidak ada PC Windows atau Mac), jalur gratis ini tidak menyediakan instalasi langsung hanya dengan mengetuk IPA dari aplikasi Files/Safari.
+Build GitHub menggunakan macOS runner, sehingga Anda tidak perlu memasang Xcode secara lokal. Instalasi dan penandatanganan tetap dilakukan di komputer Windows. Editing foto Orelio ditujukan untuk bekerja offline setelah instalasi.
