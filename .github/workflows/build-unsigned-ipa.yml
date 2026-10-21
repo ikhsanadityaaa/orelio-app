@@ -1,36 +1,72 @@
 name: Build unsigned iPhone IPA (free sideload)
+
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-unsigned-ipa.yml"
+      - "tools/build_unsigned_ipa_on_mac.sh"
+      - "orelio/**"
+      - "orelio.xcodeproj/**"
 
 permissions:
   contents: read
+
+concurrency:
+  group: unsigned-iphone-ipa-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   unsigned-iphone-ipa:
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - name: Checkout orelio source
+      - name: Checkout latest orelio source
         uses: actions/checkout@v4
-      - name: Xcode version
+
+      - name: Show Xcode
         run: xcodebuild -version
-      - name: Build and package unsigned iPhone IPA
+
+      - name: Check model and collage backwards compatibility
+        shell: bash
         run: |
-          chmod +x tools/build_unsigned_ipa_on_mac.sh
-          ./tools/build_unsigned_ipa_on_mac.sh
-      - name: Upload unsigned IPA
+          set -euo pipefail
+          swiftc -o /tmp/orelio-model-smoke \
+            orelio/Models/Models.swift \
+            orelio/Models/BatchRecipeOperation.swift \
+            tools/SmokeTests/main.swift
+          /tmp/orelio-model-smoke
+
+      - name: Build real iPhone arm64 app and package unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/build_unsigned_ipa_on_mac.sh
+
+      - name: Verify ZIP has an iPhone app bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/orelio-unsigned.ipa
+          unzip -t dist/orelio-unsigned.ipa
+          unzip -l dist/orelio-unsigned.ipa | grep -F 'Payload/orelio.app/Info.plist'
+          echo 'READY: unsigned device IPA is available in the artifact below.'
+
+      - name: Upload unsigned IPA for Sideloadly (Windows)
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: orelio-unsigned-iphone-ipa
           path: dist/orelio-unsigned.ipa
-          retention-days: 7
+          retention-days: 14
           if-no-files-found: error
-      - name: Upload Xcode build logs (for debugging)
+
+      - name: Upload Xcode build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: orelio-device-build-log
           path: .build-iphone-unsigned/xcodebuild.log
-          retention-days: 7
+          retention-days: 14
           if-no-files-found: ignore
