@@ -47,7 +47,7 @@ if [[ "$PLATFORM" != "iPhoneOS" ]]; then
   echo "ERROR: Built for $PLATFORM instead of iPhoneOS." >&2
   exit 5
 fi
-if ! /usr/bin/lipo -verify_arch arm64 "$APP/$EXECUTABLE"; then
+if ! /usr/bin/lipo "$APP/$EXECUTABLE" -verify_arch arm64; then
   echo 'ERROR: iPhone arm64 architecture missing.' >&2
   exit 6
 fi
